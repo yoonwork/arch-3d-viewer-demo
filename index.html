@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" media="print" onload="this.media='all'">
 <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.min.js" crossorigin>
-<link rel="preload" href="sample/house.obj" as="fetch" crossorigin>
+<link rel="preload" href="sample/house.obj.gz" as="fetch" crossorigin>
 <link rel="preload" href="sample/house.mtl" as="fetch" crossorigin>
 <script async src="https://cdn.jsdelivr.net/npm/es-module-shims@1.10.0/dist/es-module-shims.js" crossorigin="anonymous"></script>
 <script type="importmap">
@@ -566,8 +566,8 @@ const r2 = v => Math.round(v * 100) / 100;
 /* ---------- [0] 설정 ---------- */
 const FEATURES = { auth: false, serverUpload: false, doorWindowEdit: false, wallEdit: false }; // 2차에서 켜는 자리
 const SAMPLES = {
-  'house-obj': { id: 'house-obj', name: '샘플 단독주택 A안', file: 'house.obj', fmt: 'OBJ', url: 'sample/house.obj', mtl: 'sample/house.mtl', base: 'sample/' },
-  'house-dae': { id: 'house-dae', name: '샘플 단독주택 A안', file: 'house.dae', fmt: 'DAE', url: 'sample/house.dae', base: 'sample/' },
+  'house-obj': { id: 'house-obj', name: '샘플 단독주택 A안', file: 'house.obj', fmt: 'OBJ', url: 'sample/house.obj', gz: 'sample/house.obj.gz', mtl: 'sample/house.mtl', base: 'sample/' },
+  'house-dae': { id: 'house-dae', name: '샘플 단독주택 A안', file: 'house.dae', fmt: 'DAE', url: 'sample/house.dae', gz: 'sample/house.dae.gz', base: 'sample/' },
 };
 const LAYERS = [
   { id: 'wall', name: '벽', icon: 'wall' },
@@ -1027,15 +1027,21 @@ const loaderEl = $('#loader');
 function showLoader(file, title = '3D 모델 불러오는 중') { $('#ldTitle').textContent = title; $('#ldFile').textContent = file; setProg(0, '파일 받는 중'); loaderEl.classList.remove('done'); loaderEl.hidden = false; }
 function setProg(p, step) { $('#ldBar').style.width = Math.round(p * 100) + '%'; $('#ldPct').textContent = Math.round(p * 100) + '%'; if (step) $('#ldStep').textContent = step; }
 function hideLoader() { loaderEl.classList.add('done'); setTimeout(() => { if (loaderEl.classList.contains('done')) loaderEl.hidden = true; }, 350); }
-async function fetchText(url, onProg) {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(url + ' ' + res.status);
+// 압축본(.gz)을 받아 브라우저에서 풀기: 전송량 약 1/5 (DecompressionStream 없는 구형 브라우저는 원본)
+const canGunzip = typeof DecompressionStream === 'function';
+async function fetchText(url, onProg, gzUrl) {
+  const useGz = gzUrl && canGunzip;
+  const res = await fetch(useGz ? gzUrl : url);
+  if (!res.ok) { if (useGz) return fetchText(url, onProg); throw new Error(url + ' ' + res.status); }
   const total = +res.headers.get('content-length') || 0;
   if (!res.body || !res.body.getReader) return res.text();
-  const rd = res.body.getReader(); const chunks = []; let got = 0;
-  for (;;) { const { done, value } = await rd.read(); if (done) break; chunks.push(value); got += value.length; onProg && onProg(got, total); }
-  const all = new Uint8Array(got); let o = 0; for (const c of chunks) { all.set(c, o); o += c.length; }
-  return new TextDecoder().decode(all);
+  let got = 0;
+  const counter = new TransformStream({ transform(chunk, ctl) { got += chunk.length; onProg && onProg(got, total); ctl.enqueue(chunk); } });
+  let stream = res.body.pipeThrough(counter);
+  if (useGz) stream = stream.pipeThrough(new DecompressionStream('gzip'));
+  const text = await new Response(stream).text();
+  if (onProg) { perf.bytes = got; perf.gz = !!useGz; }
+  return text;
 }
 const kb = n => n >= 1048576 ? (n / 1048576).toFixed(1) + 'MB' : Math.max(1, Math.round(n / 1024)) + 'KB';
 
@@ -1050,7 +1056,7 @@ async function loadSample(id, opts = {}) {
     const prog = (g, t) => setProg(Math.min(0.7, t ? (g / t) * 0.7 : 0.35), `파일 받는 중 · ${kb(g)}`);
     let obj;
     if (S.fmt === 'OBJ') {
-      const [text, mtlText] = await Promise.all([fetchText(S.url, prog), fetchText(S.mtl)]);
+      const [text, mtlText] = await Promise.all([fetchText(S.url, prog, S.gz), fetchText(S.mtl)]);
       perf.t.dl = performance.now() - t0; setProg(0.75, '재질·형상 해석');
       await nextFrame();
       const t1 = performance.now();
@@ -1058,7 +1064,7 @@ async function loadSample(id, opts = {}) {
       obj = new OBJLoader().setMaterials(mtl).parse(text);
       perf.t.parse = performance.now() - t1;
     } else {
-      const [text, { ColladaLoader }] = await Promise.all([fetchText(S.url, prog), import('three/addons/loaders/ColladaLoader.js')]);
+      const [text, { ColladaLoader }] = await Promise.all([fetchText(S.url, prog, S.gz), import('three/addons/loaders/ColladaLoader.js')]);
       perf.t.dl = performance.now() - t0; setProg(0.75, '재질·형상 해석');
       await nextFrame();
       const t1 = performance.now();
@@ -1489,6 +1495,7 @@ function renderProps() {
     <div class="perf-row"><span>지오메트리 병합 <b class="num" id="perfMerge"></b></span><button class="tg" data-tg="merge" aria-pressed="${Q.merge}" aria-label="지오메트리 병합"></button></div>
     <div class="perf-row"><span>외곽선</span><button class="tg" data-tg="edges" aria-pressed="${Q.edges}" aria-label="외곽선"></button></div>
     <div class="perf-row"><span>그리는 방식</span><b>움직일 때만 그림</b></div>
+    <div class="perf-row"><span>받은 용량</span><b class="num" id="perfBytes"></b></div>
     <div class="timing" id="perfTiming"></div></section>`;
   const mSec = `<section class="sec" id="mSec"><h3>${icon('ruler', 'ic s')}측정<span class="r">${measures.length ? `<button class="txtbtn" data-act="mclearall">모두 지우기</button>` : ''}</span></h3><div id="mList"></div></section>`;
   if (sel.item == null) {
@@ -1555,6 +1562,7 @@ function applyColorThrottled(v) { clearTimeout(ccTimer); ccTimer = setTimeout(()
 function updatePerf() {
   const env = $('#perfEnv'); if (env) env.textContent = `${envLabel} · ${Q.label}`;
   const mg = $('#perfMerge'); if (mg) mg.textContent = Q.merge ? `${Model.parts.length} → ${Model.meshCount}` : `꺼짐 · ${Model.meshCount}`;
+  const pb = $('#perfBytes'); if (pb) pb.textContent = Model.source?.kind === 'local' ? '내 파일 (전송 없음)' : perf.bytes ? `${kb(perf.bytes)}${perf.gz ? ' · 압축 전송' : ''}` : '-';
   const tm = $('#perfTiming');
   if (tm) tm.innerHTML = [['받기', perf.t.dl], ['해석', perf.t.parse], ['병합', perf.t.merge], ['전체', perf.loadMs]].map(([k, v]) => `<div><span>${k}</span><b class="num">${v == null ? '-' : v < 1000 ? Math.round(v) + 'ms' : (v / 1000).toFixed(2) + 's'}</b></div>`).join('');
   $$('[data-prv]').forEach(b => b.setAttribute('aria-pressed', Math.abs(Q.pr - +b.dataset.prv) < 0.13));
