@@ -721,7 +721,10 @@ function frame(now) {
     needRender = false;
     renderer.render(scene, camera);
     updateOverlay();
-    if (perf.last && now - perf.last < 120) { perf.iv.push(now - perf.last); if (perf.iv.length > 40) perf.iv.shift(); }
+    // 연속으로 그린 프레임 사이 간격만 모아서 FPS 계산 (띄엄띄엄 그린 건 제외)
+    const dt = now - perf.last;
+    perf.streak = perf.last && dt < 120 ? (perf.streak || 0) + 1 : 0;
+    if (perf.streak >= 3) { perf.iv.push(dt); if (perf.iv.length > 40) perf.iv.shift(); }
     perf.last = now;
   }
 }
