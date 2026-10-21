@@ -1,0 +1,1711 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="description" content="건축 3D 결과물(OBJ·DAE) 웹 뷰어 데모 · 보기, 색 바꾸기, 숨기기, 치수 측정, 링크 공유 (가상 서비스명, 예시 모델)">
+<meta name="theme-color" content="#ffffff">
+<meta name="color-scheme" content="only light">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' rx='8' fill='%232563EB'/%3E%3Cpath d='M8 10l6-3 6 3v8l-6 3-6-3z' fill='none' stroke='white' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E">
+<title>Planfold · 3D 뷰어 데모</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" media="print" onload="this.media='all'">
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.min.js" crossorigin>
+<link rel="preload" href="sample/house.obj" as="fetch" crossorigin>
+<link rel="preload" href="sample/house.mtl" as="fetch" crossorigin>
+<script async src="https://cdn.jsdelivr.net/npm/es-module-shims@1.10.0/dist/es-module-shims.js" crossorigin="anonymous"></script>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.min.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+} }
+</script>
+<style>
+:root{color-scheme:only light;--ink:#111827;--ink2:#374151;--mut:#6B7280;--mut2:#9CA3AF;--line:#E5E7EB;--line2:#F0F1F4;--hov:#F5F7FA;--acc:#2563EB;--acc-d:#1D4ED8;--acc-t:#EFF4FF;--acc-t2:#DCE7FE;--ok:#16A34A;--sh:0 4px 16px rgba(17,24,39,.08);--sh2:0 16px 40px rgba(17,24,39,.14);--r:16px;--r2:12px;--top:56px;--sheet-h:0px;--safe-b:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0;overflow:hidden;background:#fff}
+body{color:var(--ink);font:14px/1.5 "Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,system-ui,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;word-break:keep-all;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%}
+h1,h2,h3,p{margin:0}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0;padding:0}
+button:disabled{cursor:default}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.ic.s{width:16px;height:16px}
+.num{font-variant-numeric:tabular-nums}
+.app{position:fixed;inset:0;display:flex;flex-direction:column;height:var(--app-h,100dvh)}
+
+/* ── top bar ── */
+.top{height:var(--top);flex:none;display:flex;align-items:center;gap:14px;padding:0 16px 0 18px;border-bottom:1px solid var(--line);background:#fff;z-index:30;position:relative}
+.brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:17px;letter-spacing:-.2px;color:var(--ink);text-decoration:none;flex:none}
+.brand svg{width:28px;height:28px}
+.vsep{width:1px;height:22px;background:var(--line);flex:none}
+.file{display:flex;align-items:center;gap:8px;min-width:0}
+.file .fn{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px;border-radius:999px;background:var(--hov);border:1px solid var(--line);color:var(--ink2);font-size:11.5px;font-weight:600;white-space:nowrap;flex:none}
+.chip.acc{background:var(--acc-t);border-color:var(--acc-t2);color:var(--acc-d)}
+.chip .ic{width:13px;height:13px}
+.top-r{margin-left:auto;display:flex;align-items:center;gap:8px;flex:none}
+.demo-note{font-size:12px;color:var(--mut);margin-right:6px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;text-decoration:none;height:38px;padding:0 14px;border-radius:var(--r2);font-weight:600;font-size:13.5px;white-space:nowrap;transition:background .15s,border-color .15s,color .15s}
+.btn .ic{width:18px;height:18px}
+.btn.line{border:1px solid var(--line);background:#fff;color:var(--ink2)}
+.btn.line:hover{background:var(--hov)}
+.btn.pri{background:var(--acc);color:#fff;box-shadow:0 1px 2px rgba(37,99,235,.25)}
+.btn.pri:hover{background:var(--acc-d)}
+.btn.sm{height:32px;padding:0 11px;font-size:12.5px;border-radius:10px}
+.btn.icon-only{width:40px;padding:0}
+
+/* ── stage ── */
+.stage{position:relative;flex:1;min-height:0;overflow:hidden;background:#fff}
+#c{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;outline:none;-webkit-user-select:none;user-select:none}
+.stage.measuring #c{cursor:crosshair}
+#ov{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+#labels{position:absolute;inset:0;pointer-events:none}
+.mlabel{position:absolute;transform:translate(-50%,-50%);background:#fff;color:var(--acc-d);border:1.5px solid var(--acc);border-radius:999px;padding:2px 9px;font-size:12.5px;font-weight:700;white-space:nowrap;box-shadow:0 2px 8px rgba(37,99,235,.18)}
+.mlabel.pending{color:var(--mut);border-color:var(--mut2);box-shadow:none;font-weight:600}
+
+/* floating cards */
+.panel{position:absolute;z-index:6;background:#fff;border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);display:flex;flex-direction:column;overflow:hidden}
+.panel.left{top:16px;left:16px;width:272px;max-height:calc(100% - 76px)}
+.panel.right{top:16px;right:16px;width:320px;bottom:16px}
+.ph{display:flex;align-items:center;gap:8px;padding:14px 14px 10px 16px}
+.ph h2{font-size:15px;font-weight:700;letter-spacing:-.2px}
+.ph .cnt{font-size:12px;color:var(--mut);font-weight:600}
+.txtbtn{margin-left:auto;font-size:12.5px;font-weight:600;color:var(--acc);padding:6px 8px;border-radius:8px}
+.txtbtn:hover{background:var(--acc-t)}
+.txtbtn:disabled{color:var(--mut2);background:none}
+.search{display:flex;align-items:center;gap:8px;margin:0 12px 8px;padding:0 11px;height:38px;border:1px solid var(--line);border-radius:var(--r2);color:var(--mut)}
+.search:focus-within{border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-t)}
+.search input{border:0;outline:0;flex:1;min-width:0;height:100%;font-size:13.5px;color:var(--ink);background:none}
+.search input::placeholder{color:var(--mut2)}
+.tree{overflow:auto;padding:0 6px 10px;overscroll-behavior:contain}
+.grp{border-radius:10px}
+.grow{display:flex;align-items:center;gap:6px;height:40px;padding:0 4px 0 2px;border-radius:10px}
+.grow:hover{background:var(--hov)}
+.exp{width:28px;height:28px;display:grid;place-items:center;border-radius:8px;color:var(--mut)}
+.exp .ic{width:16px;height:16px;transition:transform .15s}
+.grp.open .exp .ic{transform:rotate(90deg)}
+.gi{width:28px;height:28px;display:grid;place-items:center;border-radius:8px;background:var(--hov);color:var(--ink2)}
+.gi .ic{width:16px;height:16px}
+.gn{font-weight:600;font-size:13.5px}
+.gc{font-size:12px;color:var(--mut);margin-left:2px}
+.eye{margin-left:auto;width:32px;height:32px;display:grid;place-items:center;border-radius:8px;color:var(--mut)}
+.eye:hover{background:#fff;color:var(--ink)}
+.eye .ic{width:17px;height:17px}
+.grp.off .gn,.grp.off .gi,.row.off .rn{opacity:.45}
+.gitems{padding:0 0 4px 34px}
+.grp:not(.open) .gitems{display:none}
+.row{display:flex;align-items:center;height:34px;padding:0 2px 0 10px;border-radius:9px;cursor:pointer;font-size:13px;color:var(--ink2)}
+.row:hover{background:var(--hov)}
+.row.sel{background:var(--acc-t);color:var(--acc-d);font-weight:600}
+.row .rn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .eye{width:28px;height:28px}
+.more-rows{font-size:12px;color:var(--mut);padding:6px 10px}
+
+/* right panel */
+.pscroll{overflow:auto;flex:1;overscroll-behavior:contain}
+.sec{padding:14px 16px;border-top:1px solid var(--line2)}
+.sec:first-child{border-top:0}
+.sec h3{font-size:12px;font-weight:700;color:var(--mut);letter-spacing:.2px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.sec h3 .r{margin-left:auto;font-weight:600;letter-spacing:0}
+.kv{display:grid;grid-template-columns:72px 1fr;gap:7px 10px;font-size:13px}
+.kv dt{color:var(--mut)}
+.kv dd{margin:0;color:var(--ink);font-weight:500;min-width:0;overflow-wrap:anywhere}
+.selhead{display:flex;align-items:flex-start;gap:10px}
+.selhead .gi{width:36px;height:36px;border-radius:10px;background:var(--acc-t);color:var(--acc)}
+.selhead .gi .ic{width:19px;height:19px}
+.selname{font-size:16px;font-weight:700;letter-spacing:-.2px;line-height:1.3}
+.selsub{font-size:12px;color:var(--mut);margin-top:2px;overflow-wrap:anywhere}
+.selx{margin-left:auto;width:32px;height:32px;display:grid;place-items:center;border-radius:9px;color:var(--mut);flex:none}
+.selx:hover{background:var(--hov);color:var(--ink)}
+.parts{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.pchip{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 10px 0 6px;border-radius:999px;border:1px solid var(--line);font-size:12.5px;font-weight:600;color:var(--ink2);background:#fff}
+.pchip i{width:18px;height:18px;border-radius:50%;border:1px solid rgba(0,0,0,.08);background-size:cover;flex:none}
+.pchip[aria-pressed=true]{border-color:var(--acc);background:var(--acc-t);color:var(--acc-d)}
+.sw{display:grid;grid-template-columns:repeat(7,1fr);gap:7px}
+.sw button{aspect-ratio:1;border-radius:10px;border:1px solid rgba(17,24,39,.08);position:relative;background-size:cover;background-position:center;min-height:34px}
+.sw button[aria-pressed=true]{box-shadow:0 0 0 2px #fff,0 0 0 4px var(--acc)}
+.sw button.reset{background:#fff;color:var(--mut);display:grid;place-items:center;border:1px dashed var(--mut2)}
+.sw button.custom{background:conic-gradient(#f87171,#fbbf24,#34d399,#60a5fa,#a78bfa,#f87171);overflow:hidden}
+.sw button.custom input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;border:0;padding:0}
+.swl{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--mut);margin:12px 0 8px}
+.seg{display:flex;background:var(--hov);border:1px solid var(--line);border-radius:11px;padding:3px;gap:2px}
+.seg button{flex:1;height:30px;border-radius:8px;font-size:12.5px;font-weight:600;color:var(--mut);white-space:nowrap;padding:0 8px}
+.seg button[aria-pressed=true]{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(17,24,39,.12)}
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.acts .btn{width:100%}
+.note2{margin-top:10px;display:flex;gap:8px;align-items:flex-start;padding:10px 12px;border:1px dashed var(--line);border-radius:12px;font-size:12px;color:var(--mut);line-height:1.5}
+.note2 .ic{width:16px;height:16px;margin-top:1px;color:var(--mut2)}
+.drop-mini{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;padding:14px 12px;border:1.5px dashed var(--acc-t2);border-radius:14px;background:#fff;color:var(--mut);font-size:12.5px;cursor:pointer}
+.drop-mini:hover{border-color:var(--acc);background:var(--acc-t)}
+.drop-mini b{color:var(--ink);font-weight:600}
+.drop-mini .ic{color:var(--acc);width:22px;height:22px}
+.perf-row{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:34px;font-size:13px}
+.perf-row>span:first-child{color:var(--mut)}
+.perf-row b{font-weight:600}
+.tg{position:relative;width:40px;height:24px;border-radius:999px;background:#D1D5DB;transition:background .15s;flex:none}
+.tg::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:transform .15s}
+.tg[aria-pressed=true]{background:var(--acc)}
+.tg[aria-pressed=true]::after{transform:translateX(16px)}
+.seg.mini{padding:2px}
+.seg.mini button{height:26px;font-size:12px;padding:0 9px}
+.timing{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
+.timing div{background:#fff;border:1px solid var(--line);border-radius:10px;padding:7px 8px}
+.timing span{display:block;font-size:11px;color:var(--mut)}
+.timing b{font-size:13px}
+.mlist{display:flex;flex-direction:column;gap:6px}
+.mrow{display:flex;align-items:center;gap:10px;height:40px;padding:0 4px 0 12px;border:1px solid var(--line);border-radius:12px;font-size:13px}
+.mrow .n{width:20px;height:20px;border-radius:50%;background:var(--acc-t);color:var(--acc-d);font-size:11px;font-weight:700;display:grid;place-items:center}
+.mrow b{font-size:14px}
+.mrow .eye{margin-left:auto}
+.empty{font-size:12.5px;color:var(--mut)}
+select.unit{height:30px;border:1px solid var(--line);border-radius:9px;padding:0 6px;background:#fff;font-size:12.5px}
+
+/* view chips */
+.views{position:absolute;z-index:7;top:16px;right:352px;display:flex;align-items:center;gap:8px}
+.vseg{display:flex;gap:2px;padding:4px;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--sh)}
+.vseg button{height:34px;min-width:52px;padding:0 12px;border-radius:10px;font-size:13px;font-weight:600;color:var(--ink2);display:flex;align-items:center;justify-content:center;gap:6px}
+.vseg button:hover{background:var(--hov)}
+.vseg button[aria-pressed=true]{background:var(--acc-t);color:var(--acc-d)}
+.vhome{height:44px;padding:0 13px;border-radius:14px;background:#fff;border:1px solid var(--line);box-shadow:var(--sh);display:flex;align-items:center;gap:6px;font-weight:600;font-size:13px;color:var(--ink2)}
+.vhome:hover{background:var(--hov)}
+.vhome .ic{width:17px;height:17px}
+
+/* toolbar pill */
+.toolbar{position:absolute;z-index:8;left:calc(50% - 24px);bottom:24px;transform:translateX(-50%);display:flex;align-items:center;gap:2px;padding:6px;background:#fff;border:1px solid var(--line);border-radius:999px;box-shadow:var(--sh2);transition:opacity .2s,transform .2s}
+.tb{width:62px;height:52px;border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--ink2);font-size:11.5px;font-weight:600;line-height:1}
+.tb:first-child{border-radius:999px 16px 16px 999px}
+.tb:hover{background:var(--hov)}
+.tb[aria-pressed=true]{background:var(--acc-t);color:var(--acc-d)}
+.tb:disabled{color:#C4C8CF;background:none}
+.tbsep{width:1px;height:30px;background:var(--line);margin:0 5px;flex:none}
+.tbm{display:flex;align-items:center;gap:8px;padding:0 6px 0 14px;height:52px}
+.tbm .msg{display:flex;align-items:center;gap:8px;font-weight:600;font-size:13.5px;white-space:nowrap}
+.tbm .msg .ic{color:var(--acc)}
+.tbm .btn{height:40px;border-radius:999px}
+.mob-only{display:none!important}
+
+/* quick menu near selection */
+.quick{position:absolute;z-index:9;display:flex;align-items:center;gap:2px;padding:4px;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--sh2);transform:translate(-50%,calc(-100% - 12px));white-space:nowrap;pointer-events:auto}
+.quick .qn{font-size:12.5px;font-weight:700;padding:0 8px 0 8px;max-width:140px;overflow:hidden;text-overflow:ellipsis}
+.quick button{height:34px;padding:0 10px;border-radius:10px;display:flex;align-items:center;gap:5px;font-size:12.5px;font-weight:600;color:var(--ink2)}
+.quick button:hover{background:var(--hov)}
+.quick button .ic{width:16px;height:16px}
+.quick .qx{width:34px;padding:0;justify-content:center;color:var(--mut)}
+.quick::after{content:"";position:absolute;left:50%;bottom:-6px;width:10px;height:10px;background:#fff;border-right:1px solid var(--line);border-bottom:1px solid var(--line);transform:translateX(-50%) rotate(45deg)}
+
+/* popovers */
+.pop{position:absolute;z-index:12;background:#fff;border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh2);padding:14px}
+#colorPop{left:calc(50% - 24px);bottom:96px;transform:translateX(-50%);width:328px}
+#colorPop .pt{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-weight:700;font-size:13.5px}
+#colorPop .pt .sub{font-weight:500;color:var(--mut);font-size:12px}
+#colorPop .pt .selx{width:28px;height:28px}
+#moreMenu{right:12px;width:220px;padding:6px}
+#moreMenu button{display:flex;align-items:center;gap:10px;width:100%;height:44px;padding:0 10px;border-radius:10px;font-size:14px;font-weight:500;color:var(--ink2);text-align:left}
+#moreMenu button:hover{background:var(--hov)}
+#moreMenu hr{border:0;border-top:1px solid var(--line2);margin:4px 6px}
+
+/* hud */
+.hud{position:absolute;z-index:5;left:16px;bottom:16px;display:flex;align-items:center;gap:7px;height:28px;padding:0 10px;border-radius:999px;background:rgba(255,255,255,.88);border:1px solid var(--line);font-size:11.5px;color:var(--mut);white-space:nowrap;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.hud .dot{width:7px;height:7px;border-radius:50%;background:var(--mut2)}
+.hud.live .dot{background:var(--ok);box-shadow:0 0 0 3px rgba(22,163,74,.15)}
+.hud b{color:var(--ink2);font-weight:700}
+.hud .env{color:var(--acc-d);font-weight:600}
+
+/* hint + toast */
+.hint{position:absolute;z-index:9;left:calc(50% - 24px);top:76px;transform:translateX(-50%);display:flex;align-items:center;gap:8px;padding:9px 14px;border-radius:999px;background:var(--ink);color:#fff;font-size:13px;font-weight:500;white-space:nowrap;box-shadow:var(--sh2);transition:opacity .4s}
+.hint .ic{width:17px;height:17px;opacity:.85}
+.hint.hide{opacity:0;pointer-events:none}
+.toast{position:fixed;z-index:60;left:calc(50% - 24px);bottom:104px;transform:translate(-50%,10px);opacity:0;pointer-events:none;background:var(--ink);color:#fff;padding:10px 16px;border-radius:12px;font-size:13.5px;font-weight:500;box-shadow:var(--sh2);transition:opacity .2s,transform .2s;max-width:calc(100vw - 32px);text-align:center}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+
+/* loader */
+.loader{position:absolute;z-index:20;inset:0;display:grid;place-items:center;background:rgba(255,255,255,.72);transition:opacity .3s}
+.loader.done{opacity:0;pointer-events:none}
+.lcard{width:min(340px,calc(100% - 32px));background:#fff;border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh2);padding:18px}
+.lcard .lt{display:flex;align-items:center;gap:10px;font-weight:700;font-size:14px}
+.lcard .lt .gi{width:34px;height:34px;border-radius:10px;background:var(--acc-t);color:var(--acc);display:grid;place-items:center}
+.lcard .lf{font-size:12.5px;color:var(--mut);font-weight:500;margin-top:1px}
+.bar{height:6px;border-radius:999px;background:var(--line2);overflow:hidden;margin:14px 0 8px}
+.bar i{display:block;height:100%;width:0;background:var(--acc);border-radius:inherit;transition:width .2s}
+.lstep{display:flex;justify-content:space-between;font-size:12px;color:var(--mut)}
+.lstep b{color:var(--ink2);font-weight:600}
+
+/* drop overlay */
+.drop{position:fixed;z-index:70;inset:0;background:rgba(255,255,255,.9);display:grid;place-items:center;padding:24px}
+.dropbox{width:min(520px,100%);aspect-ratio:16/9;border:2px dashed var(--acc);border-radius:24px;background:var(--acc-t);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;padding:24px}
+.dropbox .ic{width:36px;height:36px;color:var(--acc)}
+.dropbox b{font-size:18px}
+.dropbox span{color:var(--mut);font-size:13px}
+
+/* share modal */
+.modal{position:fixed;z-index:80;inset:0;background:rgba(17,24,39,.32);display:grid;place-items:center;padding:16px}
+.dlg{width:min(460px,100%);background:#fff;border-radius:20px;box-shadow:var(--sh2);padding:20px}
+.dlg .dh{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px}
+.dlg .dh .gi{width:40px;height:40px;border-radius:12px;background:var(--acc-t);color:var(--acc);display:grid;place-items:center;flex:none}
+.dlg h2{font-size:17px;font-weight:700;letter-spacing:-.2px}
+.dlg .ds{font-size:13px;color:var(--mut);margin-top:2px}
+.optrow{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;margin-bottom:12px}
+.optrow .t{font-weight:600;font-size:13.5px}
+.optrow .d{font-size:12px;color:var(--mut)}
+.optrow .tg{margin-left:auto}
+.inc{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+.linkbox{display:flex;gap:8px}
+.linkbox input{flex:1;min-width:0;height:44px;border:1px solid var(--line);border-radius:12px;padding:0 12px;font-size:13px;color:var(--ink2);background:var(--hov)}
+.linkbox .btn{height:44px}
+.dfoot{display:flex;gap:8px;margin-top:12px;align-items:center}
+.dfoot .meta{font-size:12px;color:var(--mut);margin-right:auto}
+.warnbox{font-size:12.5px;color:#92400E;background:#FFFBEB;border:1px solid #FDE68A;border-radius:12px;padding:10px 12px;margin-bottom:12px}
+
+/* shared (read-only) mode */
+.ro .edit-only{display:none!important}
+.ro-bar{display:none}
+.ro .ro-bar{display:flex}
+
+/* sheet (mobile) */
+.sheet{display:none}
+.fatal{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:24px;color:var(--ink2);z-index:30;background:#fff}
+
+.obj-toggle{display:none!important}
+#moreMenu button:disabled{color:var(--mut2)}
+/* ── tablet: right panel only ── */
+@media (max-width:1180px) and (min-width:768px){
+  .panel.left{display:none}
+  .panel.left.show{display:flex;z-index:11}
+  .toolbar,#colorPop,.hint,.toast{left:calc(50% - 168px)}
+  .obj-toggle{display:inline-flex!important}
+  .hud{bottom:auto;top:16px}
+}
+
+/* ── phone ── */
+@media (max-width:767px){
+  :root{--top:52px;--sheet-h:84px}
+  .top{gap:10px;padding:0 8px 0 12px}
+  .brand b,.demo-note,.top .vsep,#btnOpen{display:none}
+  .file{flex:1}
+  .file .fn{font-size:14.5px}
+  .top-r{margin-left:0;gap:6px}
+  #btnShare{height:40px;padding:0 13px}
+  .views{top:10px;left:10px;right:10px;justify-content:space-between}
+  .vseg{padding:3px;border-radius:13px}
+  .vseg button{height:38px;min-width:0;padding:0 11px;font-size:13px}
+  .vhome{height:46px;width:46px;padding:0;justify-content:center;border-radius:13px}
+  .vhome span{display:none}
+  .vhome .ic{width:19px;height:19px}
+  .hud{left:10px;top:64px;bottom:auto;height:24px;font-size:11px;padding:0 9px}
+  .hint{top:96px;left:50%;font-size:12.5px;padding:8px 13px}
+  .panel{position:static;border:0;box-shadow:none;border-radius:0;width:auto!important;max-height:none!important;height:100%;overflow:hidden}
+  .panel.left,.panel.right{display:none}
+  .sheet .panel.cur{display:flex}
+  .sheet{display:flex;flex-direction:column;position:absolute;z-index:10;left:0;right:0;bottom:0;height:calc(var(--sheet-h) + var(--safe-b));background:#fff;border-top:1px solid var(--line);border-radius:20px 20px 0 0;box-shadow:0 -6px 24px rgba(17,24,39,.08);transition:height .25s cubic-bezier(.2,.8,.2,1)}
+  .sheet.drag{transition:none}
+  .sh-handle{height:22px;flex:none;display:grid;place-items:center;touch-action:none;width:100%}
+  .sh-handle i{width:40px;height:5px;border-radius:999px;background:#D1D5DB}
+  .sh-tabs{flex:none;display:flex;gap:6px;padding:0 12px 10px;align-items:center}
+  .sh-tabs .seg{flex:1}
+  .sh-tabs .seg button{height:38px;font-size:13.5px}
+  .sh-body{flex:1;min-height:0;display:flex;flex-direction:column;padding-bottom:var(--safe-b)}
+  .sheet .ph{display:none}
+  .sheet .search{margin:4px 12px 8px}
+  .sheet .tree{flex:1}
+  .sheet .sec{padding:14px 16px}
+  .toolbar{left:50%;bottom:calc(var(--sheet-h) + 12px + var(--safe-b));padding:5px;gap:0}
+  .toolbar.away{opacity:0;pointer-events:none;transform:translate(-50%,16px)}
+  .tb{width:58px;height:52px;font-size:11px}
+  .tbsep{margin:0 3px}
+  .desk-only{display:none!important}
+  .mob-only{display:flex!important}
+  .tbm{padding:0 4px 0 10px}
+  .tbm .msg{font-size:13px}
+  .tbm .btn{padding:0 12px}
+  #colorPop{left:10px;right:10px;width:auto;transform:none;bottom:calc(var(--sheet-h) + 84px + var(--safe-b))}
+  #moreMenu{bottom:calc(var(--sheet-h) + 84px + var(--safe-b))}
+  .quick .qn{max-width:88px;padding:0 6px}
+  .quick button{height:40px;padding:0 8px;gap:4px}
+  .ro #fileFmt,.ro #btnEditMode{display:none!important}
+  .modal{place-items:end center;padding:0}
+  .dlg{border-radius:20px 20px 0 0;padding:18px 16px calc(18px + var(--safe-b))}
+  .toast{left:50%;bottom:calc(var(--sheet-h) + 84px + var(--safe-b))}
+  .sw{grid-template-columns:repeat(7,1fr);gap:7px}
+  #colorPop{padding:12px 12px 12px}
+  #colorPop .sw{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:44px;overflow-x:auto;padding:4px 2px 6px;margin:0 -2px;scrollbar-width:none}
+  #colorPop .sw::-webkit-scrollbar{display:none}
+  #colorPop .sw button{min-height:44px}
+  #colorPop .swl{margin:6px 0 6px}
+  .stage.coloring .quick{display:none!important}
+}
+@media (max-width:359px){
+  .tb{width:52px}
+  .vseg button{padding:0 8px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-rotate" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></symbol>
+  <symbol id="i-move" viewBox="0 0 24 24"><path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20"/></symbol>
+  <symbol id="i-fit" viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="8" y="8" width="8" height="8" rx="1.5"/></symbol>
+  <symbol id="i-ruler" viewBox="0 0 24 24"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z"/><path d="m14.5 12.5 2-2M11.5 9.5l2-2M8.5 6.5l2-2M17.5 15.5l2-2"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-eyeoff" viewBox="0 0 24 24"><path d="M9.9 9.9a3 3 0 1 0 4.2 4.2"/><path d="M10.7 5.1A10.4 10.4 0 0 1 12 5c7 0 10 7 10 7a13.2 13.2 0 0 1-1.7 2.7"/><path d="M6.6 6.6A13.5 13.5 0 0 0 2 12s3 7 10 7a9.7 9.7 0 0 0 5.4-1.6"/><path d="M2 2l20 20"/></symbol>
+  <symbol id="i-palette" viewBox="0 0 24 24"><circle cx="13.5" cy="6.5" r="1"/><circle cx="17.5" cy="10.5" r="1"/><circle cx="8.5" cy="7.5" r="1"/><circle cx="6.5" cy="12.5" r="1"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.93 0 1.65-.75 1.65-1.69 0-.44-.18-.84-.44-1.13-.29-.29-.44-.65-.44-1.13a1.64 1.64 0 0 1 1.67-1.67h2c3.05 0 5.55-2.5 5.55-5.55C21.97 6.01 17.46 2 12 2z"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5M12 3v12"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7.5"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="i-cube" viewBox="0 0 24 24"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .7-1.53l7-6a2 2 0 0 1 2.6 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
+  <symbol id="i-wall" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M12 9v6M16 15v6M16 3v6M3 15h18M3 9h18M8 15v6M8 3v6"/></symbol>
+  <symbol id="i-floor" viewBox="0 0 24 24"><path d="M2.5 17.5 7 7h14.5L17 17.5z"/><path d="M9.5 7 6 17.5M14.5 7 11.5 17.5"/></symbol>
+  <symbol id="i-door" viewBox="0 0 24 24"><path d="M13 4h3a2 2 0 0 1 2 2v14M2 20h3M13 20h9M10 12v.01"/><path d="M13 4.56v16.16a1 1 0 0 1-1.24.97L5 20V5.56a2 2 0 0 1 1.52-1.94l4-1A2 2 0 0 1 13 4.56Z"/></symbol>
+  <symbol id="i-window" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M12 3v18M4 12h16"/></symbol>
+  <symbol id="i-sofa" viewBox="0 0 24 24"><path d="M20 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v3"/><path d="M2 16a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5a2 2 0 0 0-4 0v1.5a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5V11a2 2 0 0 0-4 0z"/><path d="M4 18v2M20 18v2"/></symbol>
+  <symbol id="i-box" viewBox="0 0 24 24"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></symbol>
+  <symbol id="i-isolate" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/></symbol>
+  <symbol id="i-gauge" viewBox="0 0 24 24"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+  <symbol id="i-ext" viewBox="0 0 24 24"><path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></symbol>
+  <symbol id="i-pointer" viewBox="0 0 24 24"><path d="M9.04 9.69a.5.5 0 0 1 .65-.65l11 4.5a.5.5 0 0 1-.07.95l-4.35 1.04a1 1 0 0 0-.74.74l-1.04 4.35a.5.5 0 0 1-.95.07z"/><path d="M14 4.1 12 6M5.1 8l-2.9-.8M6 12l-1.9 2M7.2 2.2 8 5.1"/></symbol>
+  <symbol id="i-hand" viewBox="0 0 24 24"><path d="M18 11V6a2 2 0 0 0-4 0v0M14 10V4a2 2 0 0 0-4 0v2M10 10.5V6a2 2 0 0 0-4 0v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65M22 12.65l-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></symbol>
+  <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M21.17 6.81a1 1 0 0 0-3.99-3.99L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5z"/></symbol>
+  <symbol id="i-reset" viewBox="0 0 24 24"><path d="M3 2v6h6"/><path d="M3 13a9 9 0 1 0 3-7.7L3 8"/></symbol>
+</svg>
+
+<div class="app" id="app">
+  <header class="top">
+    <a class="brand" href="./" aria-label="Planfold 처음 화면">
+      <svg viewBox="0 0 28 28" aria-hidden="true"><rect width="28" height="28" rx="8" fill="#2563EB"/><path d="M8 10l6-3 6 3v8l-6 3-6-3z" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><path d="M8 10l6 3 6-3M14 13v8" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round" opacity=".55"/></svg>
+      <b>Planfold</b>
+    </a>
+    <span class="vsep"></span>
+    <div class="file">
+      <span class="fn" id="fileName">샘플 단독주택 A안</span>
+      <span class="chip" id="fileFmt">OBJ</span>
+      <span class="chip acc ro-bar"><svg class="ic"><use href="#i-lock"/></svg>보기 전용</span>
+    </div>
+    <div class="top-r">
+      <span class="demo-note">가상 서비스명 · 예시 모델</span>
+      <button class="btn line sm obj-toggle" id="btnObjToggle"><svg class="ic"><use href="#i-layers"/></svg>객체</button>
+      <a class="btn line ro-bar" id="btnEditMode" href="./"><svg class="ic"><use href="#i-pencil"/></svg><span class="desk-only">편집 화면 열기</span></a>
+      <button class="btn line edit-only" id="btnOpen"><svg class="ic"><use href="#i-folder"/></svg>파일 열기</button>
+      <button class="btn pri" id="btnShare"><svg class="ic"><use href="#i-link"/></svg>공유</button>
+    </div>
+  </header>
+
+  <main class="stage" id="stage">
+    <canvas id="c" aria-label="3D 모델 보기 화면" tabindex="0"></canvas>
+    <svg id="ov" aria-hidden="true"></svg>
+    <div id="labels"></div>
+
+    <div class="views" id="views">
+      <div class="vseg" role="group" aria-label="시점">
+        <button data-view="3d" aria-pressed="true">3D</button>
+        <button data-view="front" aria-pressed="false">정면</button>
+        <button data-view="side" aria-pressed="false">측면</button>
+        <button data-view="top" aria-pressed="false">평면</button>
+      </div>
+      <button class="vhome" id="btnHome" aria-label="처음 시점으로"><svg class="ic"><use href="#i-home"/></svg><span>처음 시점</span></button>
+    </div>
+
+    <div class="hud" id="hud" aria-live="off"><i class="dot"></i><span id="hudText">준비 중</span></div>
+
+    <aside class="panel left" id="panelObjects" aria-label="객체 목록">
+      <div class="ph"><h2>객체</h2><span class="cnt" id="objCount">0</span><button class="txtbtn" id="btnShowAll" disabled>모두 보이기</button></div>
+      <label class="search"><svg class="ic s"><use href="#i-search"/></svg><input id="q" type="search" placeholder="이름으로 찾기 (예: 창문, 소파)" autocomplete="off"></label>
+      <div class="tree" id="tree"></div>
+    </aside>
+
+    <aside class="panel right" id="panelProps" aria-label="속성">
+      <div class="pscroll" id="props"></div>
+    </aside>
+
+    <div class="toolbar" id="toolbar" role="toolbar" aria-label="도구">
+      <div class="tbg" id="tbMain" style="display:flex;align-items:center">
+        <button class="tb" data-tool="orbit" aria-pressed="true" title="드래그해서 돌려 보기"><svg class="ic"><use href="#i-rotate"/></svg>회전</button>
+        <button class="tb" data-tool="pan" aria-pressed="false" title="드래그해서 옮겨 보기"><svg class="ic"><use href="#i-hand"/></svg>이동</button>
+        <button class="tb" data-act="fit" title="선택한 객체 또는 전체를 화면에 맞추기"><svg class="ic"><use href="#i-fit"/></svg>맞춤</button>
+        <i class="tbsep"></i>
+        <button class="tb" data-tool="measure" aria-pressed="false" title="두 점 사이 거리 재기"><svg class="ic"><use href="#i-ruler"/></svg>측정</button>
+        <button class="tb desk-only" data-act="hide" disabled title="선택한 객체 숨기기"><svg class="ic"><use href="#i-eyeoff"/></svg>숨기기</button>
+        <button class="tb desk-only edit-only" data-act="color" disabled title="선택한 부분 색 바꾸기"><svg class="ic"><use href="#i-palette"/></svg>색상</button>
+        <i class="tbsep desk-only edit-only"></i>
+        <button class="tb desk-only edit-only" data-act="undo" disabled title="방금 바꾼 것 되돌리기"><svg class="ic"><use href="#i-undo"/></svg>되돌리기</button>
+        <button class="tb mob-only" data-act="more" aria-expanded="false"><svg class="ic"><use href="#i-more"/></svg>더보기</button>
+      </div>
+      <div class="tbm" id="tbMeasure" hidden>
+        <span class="msg"><svg class="ic"><use href="#i-ruler"/></svg><span id="mMsg">첫 번째 점을 눌러 주세요</span></span>
+        <button class="btn line" data-act="mclear">지우기</button>
+        <button class="btn pri" data-act="mdone">완료</button>
+      </div>
+    </div>
+
+    <div class="quick" id="quick" hidden>
+      <span class="qn" id="qName"></span>
+      <button class="edit-only" data-act="color"><svg class="ic"><use href="#i-palette"/></svg><span class="lbl">색</span></button>
+      <button data-act="hide"><svg class="ic"><use href="#i-eyeoff"/></svg><span class="lbl">숨기기</span></button>
+      <button data-act="isolate" id="qIso"><svg class="ic"><use href="#i-isolate"/></svg><span class="lbl">이것만</span></button>
+      <button class="qx" data-act="desel" aria-label="선택 해제"><svg class="ic"><use href="#i-x"/></svg></button>
+    </div>
+
+    <div class="pop" id="colorPop" hidden role="dialog" aria-label="색 바꾸기">
+      <div class="pt"><span id="cpTitle">색 바꾸기</span><span class="sub" id="cpSub"></span><button class="selx" data-act="cpclose" aria-label="닫기"><svg class="ic s"><use href="#i-x"/></svg></button></div>
+      <div class="cpBody"></div>
+    </div>
+
+    <div class="pop" id="moreMenu" hidden role="menu">
+      <button class="edit-only" data-act="undo"><svg class="ic"><use href="#i-undo"/></svg>되돌리기</button>
+      <button data-act="showall"><svg class="ic"><use href="#i-eye"/></svg>숨긴 것 모두 보이기</button>
+      <button class="edit-only" data-act="resetall"><svg class="ic"><use href="#i-reset"/></svg>처음 상태로</button>
+      <hr class="edit-only">
+      <button class="edit-only" data-act="open"><svg class="ic"><use href="#i-folder"/></svg>내 파일 열기 (OBJ·DAE)</button>
+      <button data-act="sheetprops"><svg class="ic"><use href="#i-gauge"/></svg>모델 정보·성능 보기</button>
+    </div>
+
+    <div class="hint hide" id="hint"><svg class="ic"><use href="#i-pointer"/></svg><span id="hintText"></span></div>
+
+    <div class="sheet" id="sheet">
+      <button class="sh-handle" id="sheetHandle" aria-label="패널 펼치기/접기"><i></i></button>
+      <div class="sh-tabs">
+        <div class="seg" role="tablist">
+          <button data-tab="objects" aria-pressed="false">객체 <span id="tabObjCnt" class="num"></span></button>
+          <button data-tab="props" aria-pressed="true" id="tabProps">속성</button>
+        </div>
+      </div>
+      <div class="sh-body" id="sheetBody"></div>
+    </div>
+
+    <div class="loader" id="loader">
+      <div class="lcard">
+        <div class="lt"><span class="gi"><svg class="ic"><use href="#i-cube"/></svg></span><div><div id="ldTitle">3D 모델 불러오는 중</div><div class="lf" id="ldFile">house.obj</div></div></div>
+        <div class="bar"><i id="ldBar"></i></div>
+        <div class="lstep"><span id="ldStep">뷰어 준비</span><b id="ldPct" class="num">0%</b></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="drop" id="drop" hidden>
+  <div class="dropbox">
+    <svg class="ic"><use href="#i-upload"/></svg>
+    <b>여기에 놓으면 바로 열려요</b>
+    <span>OBJ는 MTL·텍스처 파일을 같이 놓아야 재질이 보여요.<br>파일은 서버로 보내지 않고 이 브라우저에서만 열어요.</span>
+  </div>
+</div>
+
+<div class="modal" id="shareModal" hidden>
+  <div class="dlg" role="dialog" aria-modal="true" aria-labelledby="shTitle">
+    <div class="dh">
+      <span class="gi"><svg class="ic"><use href="#i-link"/></svg></span>
+      <div><h2 id="shTitle">링크로 공유</h2><p class="ds">지금 보이는 화면 그대로 링크에 담아요. 받는 사람은 로그인 없이 열어요.</p></div>
+      <button class="selx" data-act="shclose" aria-label="닫기"><svg class="ic"><use href="#i-x"/></svg></button>
+    </div>
+    <div class="warnbox" id="shWarn" hidden>내 컴퓨터에서 연 파일은 이 데모에선 링크에 담기지 않아요. 실제 서비스에선 파일을 올리면 링크가 만들어져요. 지금 링크는 샘플 모델 기준이에요.</div>
+    <div class="optrow">
+      <div><div class="t">보기 전용으로 열기</div><div class="d">건축주용 · 색 바꾸기·파일 열기 버튼을 숨겨요</div></div>
+      <button class="tg" id="shRo" aria-pressed="true" aria-label="보기 전용"></button>
+    </div>
+    <div class="inc" id="shInc"></div>
+    <div class="linkbox"><input id="shUrl" readonly aria-label="공유 링크"><button class="btn pri" id="shCopy"><svg class="ic"><use href="#i-copy"/></svg>복사</button></div>
+    <div class="dfoot">
+      <span class="meta" id="shMeta"></span>
+      <button class="btn line sm" id="shNative" hidden><svg class="ic"><use href="#i-share"/></svg>다른 앱으로</button>
+      <a class="btn line sm" id="shOpen" target="_blank" rel="noopener"><svg class="ic"><use href="#i-ext"/></svg>새 창에서 보기</a>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<input type="file" id="file" multiple accept=".obj,.mtl,.dae,.png,.jpg,.jpeg,.webp,.bmp,.tga,.gif" hidden>
+
+<script>
+/* 모듈을 못 불러오는 환경(오래된 인앱 브라우저·CDN 차단) 알림 */
+setTimeout(function(){ if(!window.__pfBooted){ var l=document.getElementById('ldStep'); if(l) l.textContent='불러오기가 늦어요 · 네트워크를 확인해 주세요'; } }, 12000);
+</script>
+
+<script type="module">
+/* ============================================================================
+   Planfold 3D 뷰어 데모 — 한 파일 구성 (빌드 없음, three.js r169 CDN)
+   ----------------------------------------------------------------------------
+   [1] 환경·품질   ENV / QUALITY        : 기기 판별(PC·휴대폰·카카오톡 인앱), 픽셀비율·그림자 정책
+   [2] 뷰어 코어   Viewer               : 장면·카메라·조명, "움직일 때만 그리기" 렌더 루프, FPS 측정
+   [3] 모델 저장소 Model                : 불러온 모델을 객체(item)·부분(part)으로 정리, 재질별 병합
+   [4] 불러오기    loadSample/loadFiles : OBJ+MTL, DAE (내 파일은 브라우저에서만 열기)
+   [5] 편집 도구   select/color/hide/measure — TOOLS 목록에 등록하는 방식
+   [6] 공유        ShareCodec v1        : 시점·색·숨김·측정을 URL 해시에 담기 / 보기 전용
+   2차 확장 자리   FEATURES 플래그, TOOLS 등록(문·창문 편집), ModelSource(서버 업로드·계정)
+   ========================================================================== */
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
+import { MTLLoader } from 'three/addons/loaders/MTLLoader.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+window.__pfBooted = true;
+
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const icon = (n, cls = 'ic') => `<svg class="${cls}"><use href="#i-${n}"/></svg>`;
+const V3 = THREE.Vector3;
+const r2 = v => Math.round(v * 100) / 100;
+
+/* ---------- [0] 설정 ---------- */
+const FEATURES = { auth: false, serverUpload: false, doorWindowEdit: false, wallEdit: false }; // 2차에서 켜는 자리
+const SAMPLES = {
+  'house-obj': { id: 'house-obj', name: '샘플 단독주택 A안', file: 'house.obj', fmt: 'OBJ', url: 'sample/house.obj', mtl: 'sample/house.mtl', base: 'sample/' },
+  'house-dae': { id: 'house-dae', name: '샘플 단독주택 A안', file: 'house.dae', fmt: 'DAE', url: 'sample/house.dae', base: 'sample/' },
+};
+const LAYERS = [
+  { id: 'wall', name: '벽', icon: 'wall' },
+  { id: 'floor', name: '바닥', icon: 'floor' },
+  { id: 'door', name: '문', icon: 'door' },
+  { id: 'window', name: '창문', icon: 'window' },
+  { id: 'furn', name: '가구', icon: 'sofa' },
+  { id: 'etc', name: '기타', icon: 'box' },
+];
+const LAYER_BY = Object.fromEntries(LAYERS.map(l => [l.id, l]));
+function classify(name, matNames) {
+  const s = name + ' ' + matNames;
+  if (/window|glass|glazing|창문|유리/i.test(s)) return 'window';
+  if (/door|문/i.test(name)) return 'door';
+  if (/wall|벽|mur\b|wand/i.test(name)) return 'wall';
+  if (/floor|slab|deck|step|stair|바닥|슬래브|ground|plate/i.test(name)) return 'floor';
+  if (/furn|sofa|bed|table|chair|desk|cabinet|shelf|wardrobe|toilet|bath|vanity|fridge|counter|plant|rug|tv|가구|의자|침대|책상/i.test(name)) return 'furn';
+  return 'etc';
+}
+const TOK = { Ext: '외벽', Int: '내벽', Front: '앞', Back: '뒤', Left: '왼쪽', Right: '오른쪽', Master: '안방', MasterSide: '안방 옆', Room2: '작은방', Room2Side: '작은방 옆', HallSide: '복도 옆', Study: '서재', Bath: '욕실', Floor: '바닥', Living: '거실', Kitchen: '주방', Hall: '복도', Slab: '기초 슬래브', Base: '', Deck: '데크', Step: '현관 계단', Entry: '', Window: '창문', Door: '문', Sofa: '소파', CoffeeTable: '커피 테이블', Rug: '러그', TVConsole: 'TV 장', TV: 'TV', Plant: '화분', Fridge: '냉장고', Counter: '주방 카운터', DiningTable: '식탁', Chair: '의자', Bed: '침대', Nightstand: '협탁', L: '왼쪽', R: '오른쪽', Wardrobe: '붙박이장', Bathtub: '욕조', Toilet: '변기', Vanity: '세면대', Desk: '책상', Bookshelf: '책장' };
+function koLabel(raw) {
+  let t = raw.split(/[_\s]+/).filter(Boolean);
+  if (t[0] === 'Furn') t = t.slice(1);
+  if (t[0] === 'Wall' && (t[1] === 'Ext' || t[1] === 'Int')) t = t.slice(1);
+  if (!t.length || !t.every(x => x in TOK || /^\d+$/.test(x))) return raw;
+  let main = TOK[t[0]] || '', nums = [], rest = [];
+  for (const x of t.slice(1)) { if (/^\d+$/.test(x)) nums.push(x); else if (TOK[x]) rest.push(TOK[x]); }
+  if (raw === 'Door_01') return '현관문';
+  return [main + (nums.length ? ' ' + nums.join(' ') : ''), ...rest].filter(Boolean).join(' · ');
+}
+const MAT_KO = { wall_exterior: '외벽 도장', wall_interior: '내벽 도장', concrete: '콘크리트', deck_wood: '데크 목재', floor_oak: '오크 마루', floor_oak_light: '밝은 오크 마루', floor_tile: '타일', floor_tile_dark: '회색 타일', window_frame: '창틀', glass: '유리', door_frame: '문틀', door_leaf: '문짝', door_front: '현관문', metal_dark: '금속', fabric_sofa: '소파 천', fabric_chair: '의자 천', fabric_bed: '침구', fabric_blanket: '이불', wood_furniture: '가구 목재', rug: '러그', tv_black: 'TV 화면', plant: '식물', ceramic: '도기', appliance: '가전', cabinet: '수납장', counter_top: '상판' };
+const SWATCHES = [
+  { v: '#F4F3EF', n: '화이트' }, { v: '#DAD5CC', n: '웜그레이' }, { v: '#B9B1A4', n: '그레이지' }, { v: '#A8B79F', n: '세이지' },
+  { v: '#A9C3DB', n: '스카이' }, { v: '#3D4B63', n: '네이비' }, { v: '#C47E5E', n: '테라코타' }, { v: '#393C41', n: '차콜' },
+  { v: 't:oak', n: '오크 마루', img: 'sample/oak.jpg' }, { v: 't:oak_light', n: '밝은 오크', img: 'sample/oak_light.jpg' }, { v: 't:tile', n: '타일', img: 'sample/tile.jpg' },
+];
+
+/* ---------- [1] 환경·품질 ---------- */
+const UA = navigator.userAgent;
+const qp = new URLSearchParams(location.search);
+const ENV = {
+  kakao: /KAKAOTALK/i.test(UA),
+  mobile: /Android|iPhone|iPad|iPod|Mobi/i.test(UA) || (navigator.maxTouchPoints > 1 && matchMedia('(pointer: coarse)').matches),
+  cores: navigator.hardwareConcurrency || 0,
+  mem: navigator.deviceMemory || 0,
+};
+ENV.low = ENV.mobile && ((ENV.cores && ENV.cores <= 4) || (ENV.mem && ENV.mem <= 3));
+const QUALITY = {
+  high: { label: '일반', prCap: 2, shadow: true, aa: true, shadowMap: 2048 },
+  mid: { label: '모바일', prCap: 1.75, shadow: false, aa: true, shadowMap: 1024 },
+  low: { label: '절전', prCap: 1.5, shadow: false, aa: true, shadowMap: 1024 },
+};
+let tier = qp.get('q') in QUALITY ? qp.get('q') : (ENV.kakao || ENV.low) ? 'low' : ENV.mobile ? 'mid' : 'high';
+const Q = { ...QUALITY[tier], pr: 1, prLocked: false, merge: true, edges: true };
+Q.pr = Math.min(window.devicePixelRatio || 1, Q.prCap);
+const envLabel = ENV.kakao ? '카카오톡 인앱' : ENV.mobile ? '휴대폰 브라우저' : 'PC 브라우저';
+if (ENV.kakao) document.documentElement.classList.add('kakao');
+
+/* 인앱 브라우저 주소창 높이 변화 대응: 100dvh 미지원 대비 실제 높이를 변수로 */
+const setAppH = () => document.documentElement.style.setProperty('--app-h', (window.visualViewport ? visualViewport.height : innerHeight) + 'px');
+setAppH(); (window.visualViewport || window).addEventListener('resize', setAppH);
+
+/* ---------- [2] 뷰어 코어 ---------- */
+const stage = $('#stage'), canvas = $('#c');
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: Q.aa, alpha: false, powerPreference: ENV.mobile ? 'default' : 'high-performance' });
+} catch (e) {
+  stage.insertAdjacentHTML('beforeend', '<div class="fatal"><div><b>이 브라우저에서 3D 화면을 켤 수 없어요.</b><br>크롬이나 사파리로 다시 열어 주세요. (WebGL 꺼짐)</div></div>');
+  throw e;
+}
+renderer.setClearColor(0xffffff, 1);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.NeutralToneMapping;
+renderer.toneMappingExposure = 1.0;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.setPixelRatio(Q.pr);
+
+const scene = new THREE.Scene();
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+scene.environmentIntensity = 0.45;
+pmrem.dispose();
+const hemi = new THREE.HemisphereLight(0xffffff, 0xe3e6ec, 0.95);
+scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xffffff, 2.1);
+sun.castShadow = Q.shadow;
+sun.shadow.mapSize.set(Q.shadowMap, Q.shadowMap);
+sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.02;
+scene.add(sun, sun.target);
+
+const camera = new THREE.PerspectiveCamera(38, 1, 0.05, 2000);
+camera.position.set(14, 12, 16);
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true; controls.dampingFactor = 0.12;
+controls.screenSpacePanning = true;
+controls.maxPolarAngle = Math.PI * 0.497;
+controls.zoomToCursor = true;
+controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
+
+// 바닥: 아주 옅은 격자 + (PC) 실제 그림자 받는 면 + (모든 기기) 가벼운 접지 그림자
+const world = new THREE.Group(); scene.add(world);
+let grid = null;
+const shadowCatcher = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.ShadowMaterial({ opacity: 0.13 }));
+shadowCatcher.rotation.x = -Math.PI / 2; shadowCatcher.receiveShadow = true; shadowCatcher.position.y = 0.001;
+world.add(shadowCatcher);
+const contact = (() => {
+  const c = document.createElement('canvas'); c.width = c.height = 128;
+  const g = c.getContext('2d'); const rg = g.createRadialGradient(64, 64, 8, 64, 64, 64);
+  rg.addColorStop(0, 'rgba(17,24,39,0.20)'); rg.addColorStop(0.55, 'rgba(17,24,39,0.08)'); rg.addColorStop(1, 'rgba(17,24,39,0)');
+  g.fillStyle = rg; g.fillRect(0, 0, 128, 128);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: t, transparent: true, depthWrite: false, toneMapped: false }));
+  m.rotation.x = -Math.PI / 2; m.position.y = 0.0005; m.renderOrder = -1;
+  return m;
+})();
+world.add(contact);
+
+// 화면 가림(패널·툴바)을 뺀 '보이는 영역' 기준으로 모델을 가운데 두기
+function insets() {
+  const w = stage.clientWidth;
+  if (w < 768) return { l: 6, r: 6, t: 92, b: 84 + 12 + 64 + 8 };
+  if (w <= 1180) return { l: 16, r: 352, t: 72, b: 96 };
+  return { l: 304, r: 352, t: 72, b: 96 };
+}
+let W = 1, H = 1;
+function resize() {
+  W = Math.max(1, stage.clientWidth); H = Math.max(1, stage.clientHeight);
+  renderer.setSize(W, H, false);
+  camera.aspect = W / H;
+  const i = insets();
+  camera.setViewOffset(W, H, -(i.l - i.r) / 2, -(i.t - i.b) / 2, W, H);
+  camera.updateProjectionMatrix();
+  requestRender();
+}
+new ResizeObserver(resize).observe(stage);
+
+// 렌더 루프: 변화가 있을 때만 그림 (배터리·발열·버벅임 감소)
+let needRender = true, camAnim = null;
+const perf = { iv: [], last: 0, fps: 0, live: false, loadMs: 0, t: {}, firstPaint: 0, drops: 0, ups: 0 };
+function requestRender() { needRender = true; }
+controls.addEventListener('change', requestRender);
+controls.addEventListener('start', () => { camAnim = null; hideHint(); });
+function frame(now) {
+  requestAnimationFrame(frame);
+  let changed = controls.update();
+  if (camAnim) { stepAnim(now); changed = true; }
+  if (perf.burst > 0) { perf.burst--; changed = true; } // 불러온 직후 잠깐 연속으로 그려서 실제 FPS를 잼
+  if (changed || needRender) {
+    needRender = false;
+    renderer.render(scene, camera);
+    updateOverlay();
+    if (perf.last && now - perf.last < 120) { perf.iv.push(now - perf.last); if (perf.iv.length > 40) perf.iv.shift(); }
+    perf.last = now;
+  }
+}
+requestAnimationFrame(frame);
+
+// 캔버스 컨텍스트 손실(인앱 브라우저 백그라운드 전환 등) 대응
+canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); toast('화면을 다시 준비하고 있어요'); }, false);
+canvas.addEventListener('webglcontextrestored', () => { resize(); requestRender(); }, false);
+
+/* ---------- 카메라 이동 애니메이션 ---------- */
+const _q = new THREE.Quaternion(), _qi = new THREE.Quaternion();
+function flyTo(pos, target, ms = 650) {
+  if (ms <= 0) { camera.position.copy(pos); controls.target.copy(target); controls.update(); requestRender(); return; }
+  const o0 = camera.position.clone().sub(controls.target), o1 = pos.clone().sub(target);
+  camAnim = { t0: controls.target.clone(), t1: target.clone(), d0: o0.length(), d1: o1.length(), u0: o0.normalize(), q: new THREE.Quaternion().setFromUnitVectors(o0.clone().normalize(), o1.clone().normalize()), start: performance.now(), ms };
+}
+function stepAnim(now) {
+  const a = camAnim; const k = Math.min(1, (now - a.start) / a.ms);
+  const e = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+  _qi.identity().slerp(a.q, e);
+  const dir = a.u0.clone().applyQuaternion(_qi);
+  controls.target.lerpVectors(a.t0, a.t1, e);
+  camera.position.copy(controls.target).addScaledVector(dir, a.d0 + (a.d1 - a.d0) * e);
+  camera.lookAt(controls.target);
+  if (k >= 1) camAnim = null;
+}
+const VIEW_DIRS = { '3d': new V3(0.95, 0.9, 1.25), front: new V3(0, 0.1, 1), side: new V3(1, 0.1, 0), top: new V3(0, 1, 0.0008) };
+let curView = '3d';
+function frustumHalf(D) {
+  const i = insets(); const fw = Math.max(80, W - i.l - i.r), fh = Math.max(80, H - i.t - i.b);
+  const tv = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+  return { w: D * tv * (W / H) * (fw / W), h: D * tv * (fh / H), tanH: tv * (W / H) * (fw / W), tanV: tv * (fh / H) };
+}
+function fitFor(box, dir) {
+  const i = insets();
+  const fw = Math.max(80, W - i.l - i.r), fh = Math.max(80, H - i.t - i.b);
+  const tv = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+  const tanV = tv * (fh / H), tanH = tv * (W / H) * (fw / W);
+  const c = box.getCenter(new V3());
+  const w = dir.clone().normalize();
+  const u = new V3().crossVectors(new V3(0, 1, 0), w).normalize();
+  const v = new V3().crossVectors(w, u);
+  let D = 0;
+  for (let n = 0; n < 8; n++) {
+    const p = new V3(n & 1 ? box.max.x : box.min.x, n & 2 ? box.max.y : box.min.y, n & 4 ? box.max.z : box.min.z).sub(c);
+    const z = p.dot(w);
+    D = Math.max(D, z + Math.abs(p.dot(u)) / tanH, z + Math.abs(p.dot(v)) / tanV);
+  }
+  D *= 1.04;
+  return { pos: c.clone().addScaledVector(w, D), target: c };
+}
+function setView(name, ms = 650) {
+  curView = name;
+  $$('.vseg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.view === name));
+  const box = Model.visibleBox();
+  if (box.isEmpty()) return;
+  // 세로로 긴 휴대폰 화면에선 3D 시점을 조금 더 위에서 내려다봐서 모델을 크게 보여줌
+  const i = insets(); const portrait = (W - i.l - i.r) < (H - i.t - i.b);
+  const dir = name === '3d' && portrait ? new V3(0.5, 1.15, 1.0) : VIEW_DIRS[name];
+  const f = fitFor(box, dir);
+  flyTo(f.pos, f.target, ms);
+}
+function clearViewChips() { curView = null; $$('.vseg button').forEach(b => b.setAttribute('aria-pressed', 'false')); }
+
+/* ---------- [3] 모델 저장소 ---------- */
+const Model = {
+  root: new THREE.Group(),   // 단위·축 보정 + 가운데 맞춤
+  draw: new THREE.Group(),   // 화면에 그리는 메시(병합 결과)
+  items: [], parts: [], mats: new Map(), texCache: new Map(),
+  hiddenItems: new Set(), hiddenLayers: new Set(), isolate: null,
+  overrides: new Map(),       // partId → '#rrggbb' | 't:oak'
+  buckets: new Map(), source: null, rawBox: new THREE.Box3(), unit: 'auto', unitScale: 1, unitGuess: 'm', zUp: false, tris: 0,
+  clear() {
+    for (const b of this.buckets.values()) disposeBucket(b);
+    this.buckets.clear(); this.draw.clear();
+    for (const p of this.parts) { p.geom.dispose(); p.edges?.dispose(); }
+    for (const m of this.mats.values()) { m.material.map?.dispose?.(); m.material.dispose(); }
+    this.items = []; this.parts = []; this.mats.clear();
+    this.hiddenItems.clear(); this.hiddenLayers.clear(); this.isolate = null; this.overrides.clear(); this.tris = 0;
+  },
+  partVisible(p) {
+    const it = this.items[p.itemId];
+    if (this.isolate != null) return this.isolate === p.itemId;
+    return !this.hiddenItems.has(p.itemId) && !this.hiddenLayers.has(it.layer);
+  },
+  itemVisible(it) { return it.parts.some(pid => this.partVisible(this.parts[pid])); },
+  visibleBox() {
+    const b = new THREE.Box3();
+    for (const it of this.items) if (this.itemVisible(it)) b.union(it.box);
+    if (b.isEmpty()) for (const it of this.items) b.union(it.box);
+    return b;
+  },
+  worldBox() { const b = new THREE.Box3(); for (const it of this.items) b.union(it.box); return b; },
+};
+scene.add(Model.root); Model.root.add(Model.draw);
+
+function toStd(src, keyHint) {
+  const opacity = src.opacity ?? 1;
+  const glass = src.transparent && opacity < 0.98;
+  // MTL 없이 연 OBJ는 흰 바탕에 묻히지 않게 옅은 회청색으로
+  const plain = !src.map && !src.name && (!src.color || src.color.getHex() === 0xffffff);
+  const m = new THREE.MeshStandardMaterial({
+    name: src.name || keyHint, color: plain ? new THREE.Color(0xd5dbe3) : src.color.clone(), map: src.map || null,
+    roughness: glass ? 0.08 : 0.82, metalness: 0, transparent: glass, opacity: glass ? Math.max(0.18, opacity) : 1,
+    depthWrite: !glass, side: THREE.DoubleSide, polygonOffset: !glass, polygonOffsetFactor: 1, polygonOffsetUnits: 1,
+  });
+  if (m.map) { m.map.colorSpace = THREE.SRGBColorSpace; m.map.anisotropy = Math.min(ENV.mobile ? 2 : 8, renderer.capabilities.getMaxAnisotropy()); }
+  return m;
+}
+function matLabel(name) { return MAT_KO[name] || name || '이름 없는 재질'; }
+
+function ingest(obj3d) {
+  obj3d.updateMatrixWorld(true);
+  const srcMats = new Map();
+  let idx = 0;
+  obj3d.traverse(o => {
+    if (!o.isMesh || !o.geometry?.attributes?.position) return;
+    let g = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone();
+    g.applyMatrix4(o.matrixWorld);
+    if (!g.attributes.normal) g.computeVertexNormals();
+    for (const k of Object.keys(g.attributes)) if (!['position', 'normal', 'uv'].includes(k)) g.deleteAttribute(k);
+    if (!g.attributes.uv) g.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(g.attributes.position.count * 2), 2));
+    g.morphAttributes = {};
+    const mats = Array.isArray(o.material) ? o.material : [o.material];
+    const groups = Array.isArray(o.material) && g.groups.length ? g.groups : [{ start: 0, count: g.attributes.position.count, materialIndex: 0 }];
+    const name = o.name || o.parent?.name || ('Object_' + (++idx));
+    const item = { id: Model.items.length, name, label: koLabel(name), layer: 'etc', parts: [], box: new THREE.Box3() };
+    Model.items.push(item);
+    const matNames = [];
+    for (const gr of groups) {
+      const src = mats[gr.materialIndex ?? 0] || mats[0];
+      if (!src) continue;
+      let entry = srcMats.get(src.uuid);
+      if (!entry) {
+        let key = src.name || ('mat_' + src.uuid.slice(0, 6));
+        while (Model.mats.has(key)) key += '_';
+        entry = { key, label: matLabel(src.name), material: toStd(src, key), orig: true };
+        Model.mats.set(key, entry); srcMats.set(src.uuid, entry);
+      }
+      matNames.push(entry.key);
+      const sub = new THREE.BufferGeometry();
+      for (const k of ['position', 'normal', 'uv']) {
+        const a = g.attributes[k];
+        sub.setAttribute(k, new THREE.BufferAttribute(a.array.slice(gr.start * a.itemSize, (gr.start + gr.count) * a.itemSize), a.itemSize));
+      }
+      sub.computeBoundingBox();
+      const part = { id: Model.parts.length, itemId: item.id, geom: sub, origKey: entry.key, matKey: entry.key, tris: gr.count / 3, glass: entry.material.transparent };
+      Model.parts.push(part); item.parts.push(part.id);
+      Model.tris += part.tris;
+    }
+    item.layer = classify(name, matNames.join(' '));
+    g.dispose();
+  });
+  // 원본 좌표 범위
+  Model.rawBox.makeEmpty();
+  for (const p of Model.parts) Model.rawBox.union(p.geom.boundingBox);
+}
+
+// 단위(mm·cm·m) 자동 판단 + 축 보정 + 가운데 맞춤
+function applyTransform() {
+  const s = Model.rawBox.getSize(new V3());
+  const maxD = Math.max(s.x, s.y, s.z);
+  Model.unitGuess = maxD >= 1000 ? 'mm' : maxD >= 100 ? 'cm' : 'm';
+  const unit = Model.unit === 'auto' ? Model.unitGuess : Model.unit;
+  const k = { m: 1, cm: 0.01, mm: 0.001 }[unit];
+  Model.unitScale = k;
+  const r = Model.root;
+  r.position.set(0, 0, 0); r.scale.setScalar(k); r.rotation.set(Model.zUp ? -Math.PI / 2 : 0, 0, 0);
+  r.updateMatrixWorld(true);
+  const wb = Model.rawBox.clone().applyMatrix4(r.matrixWorld);
+  const c = wb.getCenter(new V3());
+  r.position.set(-c.x, -wb.min.y, -c.z);
+  r.updateMatrixWorld(true);
+  for (const it of Model.items) {
+    it.box.makeEmpty();
+    for (const pid of it.parts) it.box.union(Model.parts[pid].geom.boundingBox.clone().applyMatrix4(r.matrixWorld));
+  }
+  layoutGround();
+}
+function layoutGround() {
+  const b = Model.worldBox(); const s = b.getSize(new V3()); const c = b.getCenter(new V3());
+  const R = Math.max(s.x, s.z, 1);
+  if (grid) { world.remove(grid); grid.geometry.dispose(); grid.material.dispose(); }
+  const n = Math.min(200, Math.ceil(R * 3 / (R > 60 ? 10 : 1)));
+  grid = new THREE.GridHelper(n * (R > 60 ? 10 : 1), n, 0xe9ecf1, 0xf1f3f6);
+  grid.material.transparent = true; grid.material.opacity = 0.9; grid.material.depthWrite = false; grid.position.set(c.x, -0.002, c.z); grid.renderOrder = -2;
+  world.add(grid);
+  contact.scale.set(s.x * 1.5 + 2, s.z * 1.5 + 2, 1); contact.position.set(c.x, 0.0005, c.z);
+  shadowCatcher.scale.set(R * 3, R * 3, 1); shadowCatcher.position.set(c.x, 0.001, c.z);
+  const L = R * 1.6;
+  sun.position.set(c.x - L * 0.62, L * 1.05, c.z + L * 0.42); sun.target.position.copy(c);
+  const sc = sun.shadow.camera; const e = R * 0.95;
+  sc.left = -e; sc.right = e; sc.top = e; sc.bottom = -e; sc.near = 0.1; sc.far = L * 4; sc.updateProjectionMatrix();
+  camera.near = Math.max(0.01, R * 0.004); camera.far = R * 60; camera.updateProjectionMatrix();
+  controls.minDistance = R * 0.04; controls.maxDistance = R * 6;
+  applyShadow();
+}
+function applyShadow() {
+  const on = Q.shadow;
+  renderer.shadowMap.enabled = on; sun.castShadow = on; shadowCatcher.visible = on; contact.visible = true;
+  contact.material.opacity = on ? 0.55 : 1;
+  for (const b of Model.buckets.values()) b.traverse(o => { if (o.isMesh) { o.castShadow = on && !o.material.transparent; o.receiveShadow = on; } });
+  for (const m of Model.mats.values()) m.material.needsUpdate = true;
+  requestRender();
+}
+
+// 재질 키 → 실제 재질 (색·텍스처 바꾸기는 재질을 새로 만들어 묶음을 바꿈)
+function texture(name) {
+  if (Model.texCache.has(name)) return Model.texCache.get(name);
+  const t = new THREE.TextureLoader().load('sample/' + name + '.jpg', requestRender);
+  t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = Math.min(ENV.mobile ? 2 : 8, renderer.capabilities.getMaxAnisotropy());
+  Model.texCache.set(name, t); return t;
+}
+function matFor(key) {
+  if (Model.mats.has(key)) return Model.mats.get(key);
+  const [val, flag] = key.split('|');
+  const glass = flag === 'g';
+  const m = new THREE.MeshStandardMaterial({ roughness: glass ? 0.08 : 0.8, metalness: 0, side: THREE.DoubleSide, transparent: glass, opacity: glass ? 0.35 : 1, depthWrite: !glass, polygonOffset: !glass, polygonOffsetFactor: 1, polygonOffsetUnits: 1 });
+  if (val.startsWith('t:')) { m.map = texture(val.slice(2)); m.color.set(0xffffff); } else m.color.set(val);
+  const sw = SWATCHES.find(s => s.v === val);
+  const e = { key, label: sw ? sw.n : val.toUpperCase(), material: m, orig: false };
+  Model.mats.set(key, e); return e;
+}
+function overrideKey(part, val) { return val + (part.glass ? '|g' : ''); }
+
+function disposeBucket(b) { b.traverse(o => { if (o.isMesh && o.userData.merged) o.geometry.dispose(); }); }
+function rebuild(dirtyKeys = null) {
+  const t0 = performance.now();
+  const keys = dirtyKeys ? [...dirtyKeys] : [...new Set([...Model.parts.map(p => p.matKey), ...Model.buckets.keys()])];
+  for (const key of keys) {
+    const old = Model.buckets.get(key);
+    if (old) { Model.draw.remove(old); disposeBucket(old); Model.buckets.delete(key); }
+    const ps = Model.parts.filter(p => p.matKey === key && Model.partVisible(p));
+    if (!ps.length) continue;
+    const mat = matFor(key).material;
+    let obj;
+    if (Q.merge && ps.length > 1) {
+      const merged = mergeGeometries(ps.map(p => p.geom), false);
+      obj = new THREE.Mesh(merged, mat);
+      obj.userData.merged = true;
+      let acc = 0; obj.userData.ranges = ps.map(p => { const r = { s: acc, pid: p.id }; acc += p.tris; return r; });
+    } else {
+      obj = new THREE.Group();
+      for (const p of ps) { const m = new THREE.Mesh(p.geom, mat); m.userData.pid = p.id; obj.add(m); }
+    }
+    obj.traverse(o => { if (o.isMesh) { o.castShadow = Q.shadow && !mat.transparent; o.receiveShadow = Q.shadow; if (mat.transparent) o.renderOrder = 2; } });
+    Model.draw.add(obj); Model.buckets.set(key, obj);
+  }
+  rebuildEdges();
+  perf.t.merge = performance.now() - t0;
+  Model.meshCount = 0; Model.draw.traverse(o => { if (o.isMesh) Model.meshCount++; });
+  requestRender();
+}
+// 얇은 외곽선(한 번에 그리는 선 묶음 1개): 흰 바탕에서도 형태가 또렷하게
+const edgeMat = new THREE.LineBasicMaterial({ color: 0x7b8594, transparent: true, opacity: 0.32, toneMapped: false });
+let edgeLines = null;
+function rebuildEdges() {
+  if (edgeLines) { Model.root.remove(edgeLines); edgeLines.geometry.dispose(); edgeLines = null; }
+  if (!Q.edges) return;
+  const gs = [];
+  for (const p of Model.parts) {
+    if (p.glass || !Model.partVisible(p)) continue;
+    if (!p.edges) p.edges = new THREE.EdgesGeometry(p.geom, 35);
+    if (p.edges.attributes.position.count) gs.push(p.edges);
+  }
+  if (!gs.length) return;
+  edgeLines = new THREE.LineSegments(mergeGeometries(gs, false), edgeMat);
+  edgeLines.renderOrder = 1; edgeLines.raycast = () => {};
+  Model.root.add(edgeLines);
+}
+function partFromHit(h) {
+  const o = h.object;
+  if (o.userData.pid != null) return Model.parts[o.userData.pid];
+  const rs = o.userData.ranges; if (!rs) return null;
+  let lo = 0, hi = rs.length - 1, f = h.faceIndex;
+  while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (rs[mid].s <= f) lo = mid; else hi = mid - 1; }
+  return Model.parts[rs[lo].pid];
+}
+
+/* ---------- 선택 표시 (파란 외곽선 + 옅은 틴트) ---------- */
+const hl = new THREE.Group(); Model.root.add(hl);
+const hlFill = new THREE.MeshBasicMaterial({ color: 0x2563eb, transparent: true, opacity: 0.14, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2, side: THREE.DoubleSide, toneMapped: false });
+const hlLine = new THREE.LineBasicMaterial({ color: 0x2563eb, toneMapped: false });
+const hlLineHidden = new THREE.LineBasicMaterial({ color: 0x2563eb, transparent: true, opacity: 0.28, depthTest: false, toneMapped: false });
+const sel = { item: null, part: null };
+function drawHighlight() {
+  hl.children.forEach(c => { if (c.isLineSegments) c.geometry.dispose(); }); hl.clear();
+  if (sel.item == null) return requestRender();
+  const it = Model.items[sel.item];
+  for (const pid of it.parts) {
+    const p = Model.parts[pid]; if (!Model.partVisible(p)) continue;
+    hl.add(new THREE.Mesh(p.geom, hlFill));
+    const eg = new THREE.EdgesGeometry(p.geom, 28);
+    const l1 = new THREE.LineSegments(eg, hlLine); l1.renderOrder = 5;
+    const l2 = new THREE.LineSegments(eg, hlLineHidden); l2.renderOrder = 6;
+    hl.add(l1, l2);
+  }
+  requestRender();
+}
+
+/* ---------- [4] 불러오기 ---------- */
+const loaderEl = $('#loader');
+function showLoader(file, title = '3D 모델 불러오는 중') { $('#ldTitle').textContent = title; $('#ldFile').textContent = file; setProg(0, '파일 받는 중'); loaderEl.classList.remove('done'); loaderEl.hidden = false; }
+function setProg(p, step) { $('#ldBar').style.width = Math.round(p * 100) + '%'; $('#ldPct').textContent = Math.round(p * 100) + '%'; if (step) $('#ldStep').textContent = step; }
+function hideLoader() { loaderEl.classList.add('done'); setTimeout(() => { if (loaderEl.classList.contains('done')) loaderEl.hidden = true; }, 350); }
+async function fetchText(url, onProg) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(url + ' ' + res.status);
+  const total = +res.headers.get('content-length') || 0;
+  if (!res.body || !res.body.getReader) return res.text();
+  const rd = res.body.getReader(); const chunks = []; let got = 0;
+  for (;;) { const { done, value } = await rd.read(); if (done) break; chunks.push(value); got += value.length; onProg && onProg(got, total); }
+  const all = new Uint8Array(got); let o = 0; for (const c of chunks) { all.set(c, o); o += c.length; }
+  return new TextDecoder().decode(all);
+}
+const kb = n => n >= 1048576 ? (n / 1048576).toFixed(1) + 'MB' : Math.max(1, Math.round(n / 1024)) + 'KB';
+
+let pendingShare = null;
+async function loadSample(id, opts = {}) {
+  const S = SAMPLES[id] || SAMPLES['house-obj'];
+  showLoader(S.file);
+  const t0 = performance.now();
+  try {
+    const manager = new THREE.LoadingManager();
+    let texPending = 0; manager.onStart = () => texPending++; manager.onLoad = () => requestRender();
+    const prog = (g, t) => setProg(Math.min(0.7, t ? (g / t) * 0.7 : 0.35), `파일 받는 중 · ${kb(g)}`);
+    let obj;
+    if (S.fmt === 'OBJ') {
+      const [text, mtlText] = await Promise.all([fetchText(S.url, prog), fetchText(S.mtl)]);
+      perf.t.dl = performance.now() - t0; setProg(0.75, '재질·형상 해석');
+      await nextFrame();
+      const t1 = performance.now();
+      const mtl = new MTLLoader(manager).parse(mtlText, S.base); mtl.preload();
+      obj = new OBJLoader().setMaterials(mtl).parse(text);
+      perf.t.parse = performance.now() - t1;
+    } else {
+      const [text, { ColladaLoader }] = await Promise.all([fetchText(S.url, prog), import('three/addons/loaders/ColladaLoader.js')]);
+      perf.t.dl = performance.now() - t0; setProg(0.75, '재질·형상 해석');
+      await nextFrame();
+      const t1 = performance.now();
+      obj = new ColladaLoader(manager).parse(text, S.base).scene;
+      perf.t.parse = performance.now() - t1;
+    }
+    finishLoad(obj, { kind: 'sample', id: S.id, name: S.name, file: S.file, fmt: S.fmt }, t0, opts);
+  } catch (e) {
+    console.error(e);
+    setProg(1, '불러오지 못했어요 · 새로고침해 주세요');
+  }
+}
+const nextFrame = () => new Promise(r => requestAnimationFrame(() => r()));
+
+function finishLoad(obj, source, t0, opts = {}) {
+  setProg(0.85, '지오메트리 병합');
+  clearMeasures(true); setSelection(null); History.clear();
+  Model.clear(); Model.source = source; Model.unit = opts.unit || 'auto'; Model.zUp = !!opts.zUp;
+  ingest(obj);
+  Q.edges = Model.tris <= 400000; // 아주 큰 파일은 외곽선 계산을 건너뜀 (켜기 버튼으로 다시 켤 수 있음)
+  applyTransform();
+  rebuild();
+  setView('3d', 0);
+  renderer.render(scene, camera); updateOverlay();
+  perf.loadMs = performance.now() - t0;
+  if (!perf.firstPaint) perf.firstPaint = performance.now();
+  setProg(1, '완료');
+  hideLoader();
+  $('#fileName').textContent = source.name; $('#fileFmt').textContent = source.fmt;
+  document.title = source.name + ' · Planfold 3D 뷰어 데모';
+  renderTree(); renderProps(); updateHud();
+  perf.iv = []; perf.burst = 50;
+  if (pendingShare) { applyShare(pendingShare); pendingShare = null; }
+  else showHint();
+}
+
+// 내 파일 열기: 브라우저 안에서만 읽음 (업로드 없음)
+async function loadFiles(list) {
+  const files = [...list]; if (!files.length) return;
+  const main = files.find(f => /\.dae$/i.test(f.name)) || files.find(f => /\.obj$/i.test(f.name));
+  if (!main) { toast('OBJ나 DAE 파일을 같이 골라 주세요'); return; }
+  const fmt = /\.dae$/i.test(main.name) ? 'DAE' : 'OBJ';
+  showLoader(main.name, '내 파일 여는 중');
+  const t0 = performance.now();
+  const urls = new Map(files.map(f => [f.name.toLowerCase(), URL.createObjectURL(f)]));
+  const manager = new THREE.LoadingManager();
+  manager.setURLModifier(u => { const n = decodeURIComponent(u.split(/[\\/]/).pop()).toLowerCase(); return urls.get(n) || u; });
+  manager.onLoad = () => requestRender();
+  try {
+    setProg(0.3, `파일 읽는 중 · ${kb(main.size)}`);
+    const text = await main.text();
+    perf.t.dl = performance.now() - t0; setProg(0.7, '재질·형상 해석'); await nextFrame();
+    const t1 = performance.now();
+    let obj, warn = '';
+    if (fmt === 'OBJ') {
+      const want = (text.match(/^mtllib\s+(.+)$/m) || [])[1]?.trim().toLowerCase();
+      const mtlFile = files.find(f => f.name.toLowerCase() === want) || files.find(f => /\.mtl$/i.test(f.name));
+      const ol = new OBJLoader();
+      if (mtlFile) { const mtl = new MTLLoader(manager).parse(await mtlFile.text(), ''); mtl.preload(); ol.setMaterials(mtl); }
+      else warn = 'MTL 파일이 없어서 기본 색으로 보여요';
+      obj = ol.parse(text);
+    } else {
+      const { ColladaLoader } = await import('three/addons/loaders/ColladaLoader.js');
+      obj = new ColladaLoader(manager).parse(text, '');
+    }
+    obj = obj.scene || obj;
+    perf.t.parse = performance.now() - t1;
+    finishLoad(obj, { kind: 'local', id: null, name: main.name.replace(/\.(obj|dae)$/i, ''), file: main.name, fmt }, t0);
+    if (!Model.parts.length) toast('파일 안에서 3D 형상을 찾지 못했어요');
+    else if (warn) toast(warn);
+    else toast(`${main.name} 열었어요 · ${(perf.loadMs / 1000).toFixed(2)}초`);
+  } catch (e) {
+    console.error(e); setProg(1, '이 파일은 열지 못했어요'); setTimeout(hideLoader, 1600);
+    toast('파일을 읽지 못했어요. OBJ·DAE 형식인지 확인해 주세요');
+  }
+}
+
+/* ---------- [5] 편집 도구 ---------- */
+// 되돌리기 기록
+const History = {
+  stack: [],
+  snap() { return { o: new Map(Model.overrides), h: new Set(Model.hiddenItems), l: new Set(Model.hiddenLayers), i: Model.isolate, m: measures.map(m => [m.a.clone(), m.b.clone()]) }; },
+  push() { this.stack.push(this.snap()); if (this.stack.length > 60) this.stack.shift(); syncUndo(); },
+  clear() { this.stack = []; syncUndo(); },
+  undo() {
+    const s = this.stack.pop(); if (!s) return;
+    Model.overrides = s.o; Model.hiddenItems = s.h; Model.hiddenLayers = s.l; Model.isolate = s.i;
+    for (const p of Model.parts) p.matKey = Model.overrides.has(p.id) ? overrideKey(p, Model.overrides.get(p.id)) : p.origKey;
+    clearMeasures(true); s.m.forEach(([a, b]) => addMeasure(a, b, false));
+    rebuild(); drawHighlight(); renderTree(); renderProps(); syncUndo(); toast('되돌렸어요');
+  },
+};
+function syncUndo() { $$('[data-act=undo]').forEach(b => b.disabled = !History.stack.length); }
+
+function setSelection(itemId, partId = null) {
+  sel.item = itemId; sel.part = itemId == null ? null : (partId ?? Model.items[itemId].parts.find(pid => !Model.parts[pid].glass) ?? Model.items[itemId].parts[0]);
+  drawHighlight(); closePop();
+  $$('[data-act=hide],[data-act=color]', $('#toolbar')).forEach(b => b.disabled = itemId == null);
+  $('#quick').hidden = itemId == null;
+  if (itemId != null) {
+    const it = Model.items[itemId];
+    $('#qName').textContent = it.label;
+    $('#qIso').querySelector('.lbl').textContent = Model.isolate === itemId ? '전체 보기' : '이것만';
+  }
+  renderProps(); markTreeSel();
+  if (isPhone()) $('#tabProps').textContent = itemId == null ? '속성' : '속성 · ' + Model.items[itemId].label;
+}
+function applyColor(val, scope = colorScope) {
+  const p = Model.parts[sel.part]; if (!p) return;
+  History.push();
+  const targets = scope === 'same' ? Model.parts.filter(q => q.origKey === p.origKey) : [p];
+  const dirty = new Set();
+  for (const q of targets) {
+    dirty.add(q.matKey);
+    if (val == null) { Model.overrides.delete(q.id); q.matKey = q.origKey; }
+    else { Model.overrides.set(q.id, val); q.matKey = overrideKey(q, val); }
+    dirty.add(q.matKey);
+  }
+  rebuild(dirty); renderProps(); renderColorPop();
+}
+function hideItem(id) {
+  if (id == null) return;
+  History.push();
+  if (Model.isolate === id) Model.isolate = null; else Model.hiddenItems.add(id);
+  if (sel.item === id) setSelection(null);
+  rebuild(); renderTree(); renderProps(); toast('숨겼어요 · 객체 목록의 눈 아이콘으로 다시 켜요');
+}
+function toggleItem(id) {
+  History.push();
+  if (Model.hiddenItems.has(id)) Model.hiddenItems.delete(id); else Model.hiddenItems.add(id);
+  if (Model.isolate != null) Model.isolate = null;
+  if (sel.item === id && Model.hiddenItems.has(id)) setSelection(null);
+  rebuild(); drawHighlight(); renderTree(); renderProps();
+}
+function toggleLayer(lid) {
+  History.push();
+  if (Model.hiddenLayers.has(lid)) Model.hiddenLayers.delete(lid); else Model.hiddenLayers.add(lid);
+  Model.isolate = null;
+  if (sel.item != null && !Model.itemVisible(Model.items[sel.item])) setSelection(null);
+  rebuild(); drawHighlight(); renderTree(); renderProps();
+}
+function isolateItem(id) {
+  History.push();
+  Model.isolate = Model.isolate === id ? null : id;
+  rebuild(); drawHighlight(); renderTree(); renderProps();
+  if (Model.isolate != null) { fitTo(Model.items[id].box); toast('이것만 보여요 · 다시 누르면 전체 보기'); }
+  if (sel.item != null) $('#qIso').querySelector('.lbl').textContent = Model.isolate === sel.item ? '전체 보기' : '이것만';
+}
+function showAll() {
+  if (!Model.hiddenItems.size && !Model.hiddenLayers.size && Model.isolate == null) return;
+  History.push(); Model.hiddenItems.clear(); Model.hiddenLayers.clear(); Model.isolate = null;
+  rebuild(); drawHighlight(); renderTree(); renderProps();
+}
+function resetAll() {
+  History.push();
+  Model.overrides.clear(); Model.hiddenItems.clear(); Model.hiddenLayers.clear(); Model.isolate = null;
+  for (const p of Model.parts) p.matKey = p.origKey;
+  clearMeasures(true); setSelection(null); rebuild(); renderTree(); renderProps(); setView('3d');
+  toast('처음 상태로 돌렸어요');
+}
+function fitTo(box) {
+  const dir = camera.position.clone().sub(controls.target).normalize();
+  const f = fitFor(box, dir); flyTo(f.pos, f.target); clearViewChips();
+}
+
+/* 측정: 두 점 사이 거리 (꼭짓점 가까우면 자석처럼 붙음) */
+const measures = []; let mPending = null, mHover = null;
+function addMeasure(a, b, record = true) {
+  if (record) History.push();
+  measures.push({ a: a.clone(), b: b.clone() });
+  renderMeasures(); requestRender();
+}
+function clearMeasures(silent) { measures.length = 0; mPending = null; mHover = null; renderMeasures(); requestRender(); if (!silent) updateMeasureMsg(); }
+function removeMeasure(i) { History.push(); measures.splice(i, 1); renderMeasures(); requestRender(); }
+function updateMeasureMsg() { $('#mMsg').textContent = mPending ? '두 번째 점을 눌러 주세요' : (measures.length ? `${measures.length}개 측정 · 계속 눌러 더 재요` : '첫 번째 점을 눌러 주세요'); }
+
+/* 도구 목록: 2차 편집 도구(문·창문 교체 등)도 여기에 등록 */
+const TOOLS = {
+  orbit: { on() { controls.mouseButtons.LEFT = THREE.MOUSE.ROTATE; controls.touches.ONE = THREE.TOUCH.ROTATE; } },
+  pan: { on() { controls.mouseButtons.LEFT = THREE.MOUSE.PAN; controls.touches.ONE = THREE.TOUCH.PAN; } },
+  measure: {
+    on() { controls.mouseButtons.LEFT = THREE.MOUSE.ROTATE; controls.touches.ONE = THREE.TOUCH.ROTATE; stage.classList.add('measuring'); $('#tbMain').hidden = true; $('#tbMain').style.display = 'none'; $('#tbMeasure').hidden = false; closePop(); updateMeasureMsg(); },
+    off() { stage.classList.remove('measuring'); $('#tbMain').hidden = false; $('#tbMain').style.display = 'flex'; $('#tbMeasure').hidden = true; mPending = null; mHover = null; requestRender(); },
+  },
+};
+let tool = 'orbit';
+function setTool(name) {
+  if (TOOLS[tool]?.off) TOOLS[tool].off();
+  tool = name; TOOLS[name].on();
+  $$('[data-tool]').forEach(b => b.setAttribute('aria-pressed', b.dataset.tool === name));
+  if (name === 'measure') toast(isPhone() ? '측정할 두 점을 차례로 눌러 주세요' : '측정할 두 점을 차례로 클릭해요 · 모서리 근처는 자동으로 붙어요');
+}
+
+/* 화면 클릭/탭 → 선택 또는 측정 */
+const ray = new THREE.Raycaster();
+function pick(cx, cy) {
+  const r = canvas.getBoundingClientRect();
+  ray.setFromCamera(new THREE.Vector2(((cx - r.left) / r.width) * 2 - 1, -((cy - r.top) / r.height) * 2 + 1), camera);
+  const hits = ray.intersectObject(Model.draw, true);
+  // 유리는 클릭이 통과해요: 창 너머 가구·바닥을 고를 수 있게 (창문은 창틀을 누르면 선택)
+  let glass = null;
+  for (const h of hits) { const p = partFromHit(h); if (!p) continue; if (p.glass) { glass = glass || { h, part: p }; continue; } return { h, part: p }; }
+  return glass;
+}
+const _v = new V3();
+function toScreen(p) { _v.copy(p).project(camera); return { x: (_v.x + 1) / 2 * W, y: (1 - _v.y) / 2 * H, z: _v.z }; }
+function snapPoint(hit, cx, cy) {
+  const { h } = hit; const pos = h.object.geometry.attributes.position;
+  const r = canvas.getBoundingClientRect(); const sx = cx - r.left, sy = cy - r.top;
+  let best = null, bd = isPhone() ? 22 : 14;
+  for (const k of ['a', 'b', 'c']) {
+    const v = new V3().fromBufferAttribute(pos, h.face[k]).applyMatrix4(h.object.matrixWorld);
+    const s = toScreen(v); const d = Math.hypot(s.x - sx, s.y - sy);
+    if (d < bd) { bd = d; best = v; }
+  }
+  return { p: best || h.point.clone(), snapped: !!best };
+}
+let down = null, lastTap = 0, lastTapXY = null, multi = false;
+canvas.addEventListener('pointerdown', e => { if (!e.isPrimary) { multi = true; return; } multi = false; down = { x: e.clientX, y: e.clientY, t: performance.now() }; closePop(); closeMore(); });
+canvas.addEventListener('pointerup', e => {
+  if (!e.isPrimary || !down) return;
+  const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y), dt = performance.now() - down.t; down = null;
+  if (multi || moved > 7 || dt > 600) return;
+  onTap(e.clientX, e.clientY, e.pointerType);
+});
+canvas.addEventListener('pointermove', e => {
+  if (tool !== 'measure' || e.pointerType !== 'mouse' || down) return;
+  const hit = pick(e.clientX, e.clientY); mHover = hit ? snapPoint(hit, e.clientX, e.clientY) : null; requestRender();
+});
+canvas.addEventListener('pointerleave', () => { if (mHover) { mHover = null; requestRender(); } });
+function onTap(x, y) {
+  const now = performance.now();
+  const dbl = now - lastTap < 320 && lastTapXY && Math.hypot(x - lastTapXY.x, y - lastTapXY.y) < 24;
+  lastTap = now; lastTapXY = { x, y };
+  const hit = pick(x, y);
+  if (tool === 'measure') {
+    if (!hit) return;
+    const s = snapPoint(hit, x, y);
+    if (!mPending) mPending = s.p; else { addMeasure(mPending, s.p); mPending = null; }
+    updateMeasureMsg(); requestRender(); return;
+  }
+  if (dbl && hit) { // 두 번 탭: 그 지점으로 다가가기
+    const t = hit.h.point.clone(); const dir = camera.position.clone().sub(controls.target);
+    flyTo(t.clone().add(dir.multiplyScalar(0.55)), t, 450); clearViewChips(); return;
+  }
+  if (!hit) { setSelection(null); return; }
+  setSelection(hit.part.itemId, hit.part.id);
+}
+
+/* ---------- 오버레이 (측정선·라벨·빠른 메뉴 위치) ---------- */
+const ov = $('#ov'), labels = $('#labels');
+function updateOverlay() {
+  let svg = '', lab = '';
+  const seg = (a, b, cls) => {
+    const A = toScreen(a), B = toScreen(b);
+    if (A.z > 1 || B.z > 1) return null;
+    svg += `<line x1="${A.x}" y1="${A.y}" x2="${B.x}" y2="${B.y}" stroke="${cls ? '#9CA3AF' : '#2563EB'}" stroke-width="2" ${cls ? 'stroke-dasharray="5 4"' : ''} stroke-linecap="round"/>`;
+    return { A, B };
+  };
+  const dot = (p, c = '#2563EB', r = 5) => { const s = toScreen(p); if (s.z > 1) return; svg += `<circle cx="${s.x}" cy="${s.y}" r="${r}" fill="#fff" stroke="${c}" stroke-width="2.5"/>`; };
+  measures.forEach(m => {
+    const s = seg(m.a, m.b); if (!s) return;
+    dot(m.a); dot(m.b);
+    lab += `<div class="mlabel num" style="left:${(s.A.x + s.B.x) / 2}px;top:${(s.A.y + s.B.y) / 2}px">${m.a.distanceTo(m.b).toFixed(2)} m</div>`;
+  });
+  if (tool === 'measure') {
+    if (mPending && mHover) { const s = seg(mPending, mHover.p, 'pending'); if (s) lab += `<div class="mlabel pending num" style="left:${(s.A.x + s.B.x) / 2}px;top:${(s.A.y + s.B.y) / 2}px">${mPending.distanceTo(mHover.p).toFixed(2)} m</div>`; }
+    if (mPending) dot(mPending);
+    if (mHover) { dot(mHover.p, mHover.snapped ? '#16A34A' : '#2563EB', mHover.snapped ? 7 : 4); }
+  }
+  ov.innerHTML = svg; labels.innerHTML = lab;
+  // 빠른 메뉴: 선택한 객체 위쪽 가운데
+  const q = $('#quick');
+  if (sel.item != null && tool !== 'measure') {
+    const b = Model.items[sel.item].box; const top = new V3((b.min.x + b.max.x) / 2, b.max.y, (b.min.z + b.max.z) / 2);
+    const s = toScreen(top);
+    const vis = s.z < 1 && s.x > -40 && s.x < W + 40 && s.y > -40 && s.y < H + 40;
+    q.hidden = !vis;
+    if (vis) {
+      const i = insets(); const hw = q.offsetWidth / 2 + 8;
+      const x = Math.min(Math.max(s.x, i.l + hw), W - i.r - hw), y = Math.min(Math.max(s.y, i.t + 60), H - i.b - 8);
+      q.style.left = x + 'px'; q.style.top = y + 'px';
+    }
+  } else q.hidden = true;
+}
+
+/* ---------- [6] 공유: 상태를 URL 해시에 담기 ---------- */
+const ShareCodec = {
+  version: 1,
+  encode(ro) {
+    const o = {};
+    for (const [pid, v] of Model.overrides) (o[v] = o[v] || []).push(pid);
+    const s = { v: 1, s: Model.source?.id || 'house-obj', c: [...camera.position.toArray(), ...controls.target.toArray()].map(r2) };
+    // 받는 사람 화면 비율이 달라도 보낸 사람이 보던 범위가 다 보이도록, 보이던 반폭·반높이를 같이 저장
+    const fr = frustumHalf(camera.position.distanceTo(controls.target)); s.f = [r2(fr.w), r2(fr.h)];
+    if (curView) s.p = curView;
+    if (Model.hiddenItems.size) s.h = [...Model.hiddenItems];
+    if (Model.hiddenLayers.size) s.l = [...Model.hiddenLayers];
+    if (Model.isolate != null) s.i = Model.isolate;
+    if (Object.keys(o).length) s.o = o;
+    if (measures.length) s.m = measures.map(m => [...m.a.toArray(), ...m.b.toArray()].map(r2));
+    if (sel.item != null) s.sel = sel.item;
+    if (ro) s.r = 1;
+    const json = JSON.stringify(s);
+    const b64 = btoa(String.fromCharCode(...new TextEncoder().encode(json))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    return location.origin + location.pathname + '#s=' + b64;
+  },
+  decode(hash) {
+    const m = /[#&]s=([A-Za-z0-9_-]+)/.exec(hash); if (!m) return null;
+    try {
+      const b = atob(m[1].replace(/-/g, '+').replace(/_/g, '/'));
+      const s = JSON.parse(new TextDecoder().decode(Uint8Array.from(b, c => c.charCodeAt(0))));
+      return s && s.v === 1 ? s : null;
+    } catch { return null; }
+  },
+};
+let sharedCam = null;
+function applyShare(s) {
+  Model.hiddenItems = new Set((s.h || []).filter(i => Model.items[i]));
+  Model.hiddenLayers = new Set((s.l || []).filter(l => LAYER_BY[l]));
+  Model.isolate = Model.items[s.i] ? s.i : null;
+  Model.overrides.clear();
+  for (const [v, pids] of Object.entries(s.o || {})) {
+    if (!/^(#[0-9a-fA-F]{6}|t:(oak|oak_light|tile))$/.test(v)) continue;
+    for (const pid of pids) { const p = Model.parts[pid]; if (p) { Model.overrides.set(pid, v); p.matKey = overrideKey(p, v); } }
+  }
+  rebuild();
+  (s.m || []).forEach(a => { if (a.length === 6) addMeasure(new V3(a[0], a[1], a[2]), new V3(a[3], a[4], a[5]), false); });
+  if (Array.isArray(s.c) && s.c.length === 6) {
+    sharedCam = { pos: new V3(s.c[0], s.c[1], s.c[2]), target: new V3(s.c[3], s.c[4], s.c[5]) };
+    if (Array.isArray(s.f) && s.f.length === 2) {
+      const me = frustumHalf(1); const D = Math.max(s.f[0] / me.tanH, s.f[1] / me.tanV);
+      const dir = sharedCam.pos.clone().sub(sharedCam.target).normalize();
+      sharedCam.pos = sharedCam.target.clone().addScaledVector(dir, D);
+    }
+    flyTo(sharedCam.pos, sharedCam.target, 0);
+  }
+  if (s.p && VIEW_DIRS[s.p]) { curView = s.p; $$('.vseg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.view === s.p)); } else clearViewChips();
+  if (s.sel != null && Model.items[s.sel]) setSelection(s.sel);
+  renderTree(); renderProps();
+  toast(s.r ? '공유받은 화면이에요 · 돌려 보고 재 볼 수 있어요' : '링크에 담긴 화면을 열었어요');
+}
+function openShare() {
+  const local = Model.source?.kind === 'local';
+  $('#shWarn').hidden = !local;
+  updateShareLink();
+  $('#shareModal').hidden = false;
+  $('#shNative').hidden = !navigator.share;
+  setTimeout(() => $('#shCopy').focus(), 50);
+}
+function updateShareLink() {
+  const ro = $('#shRo').getAttribute('aria-pressed') === 'true';
+  const url = ShareCodec.encode(ro);
+  $('#shUrl').value = url; $('#shOpen').href = url;
+  const inc = ['시점'];
+  if (Model.overrides.size) inc.push(`바꾼 색 ${Model.overrides.size}곳`);
+  const hid = Model.hiddenItems.size + Model.hiddenLayers.size + (Model.isolate != null ? 1 : 0);
+  if (hid) inc.push(`숨김 ${hid}개`);
+  if (measures.length) inc.push(`측정 ${measures.length}개`);
+  if (sel.item != null) inc.push('선택한 객체');
+  $('#shInc').innerHTML = inc.map(t => `<span class="chip">${icon('check', 'ic')}${t}</span>`).join('');
+  $('#shMeta').textContent = `링크 ${url.length}자 · 서버 저장 없음`;
+}
+async function copyText(t) {
+  try { await navigator.clipboard.writeText(t); return true; } catch {}
+  const ta = document.createElement('textarea'); ta.value = t; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+  document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0, t.length);
+  let ok = false; try { ok = document.execCommand('copy'); } catch {}
+  ta.remove(); return ok;
+}
+
+/* ---------- UI 그리기 ---------- */
+const isPhone = () => stage.clientWidth < 768;
+const openLayers = new Set();
+function renderTree() {
+  const q = $('#q').value.trim().toLowerCase();
+  const out = [];
+  for (const L of LAYERS) {
+    const items = Model.items.filter(i => i.layer === L.id); if (!items.length) continue;
+    const shown = q ? items.filter(i => (i.label + ' ' + i.name).toLowerCase().includes(q)) : items;
+    if (q && !shown.length) continue;
+    const off = Model.hiddenLayers.has(L.id) || (Model.isolate != null && !items.some(i => i.id === Model.isolate));
+    const open = !!q || openLayers.has(L.id);
+    const rows = open ? shown.slice(0, 300).map(i => {
+      const hid = !Model.itemVisible(i);
+      return `<div class="row${sel.item === i.id ? ' sel' : ''}${hid ? ' off' : ''}" data-id="${i.id}" role="button" tabindex="0"><span class="rn">${esc(i.label)}</span><button class="eye" data-act="item" aria-label="${esc(i.label)} ${hid ? '보이기' : '숨기기'}">${icon(hid ? 'eyeoff' : 'eye')}</button></div>`;
+    }).join('') + (shown.length > 300 ? `<div class="more-rows">외 ${shown.length - 300}개 · 검색으로 찾아 주세요</div>` : '') : '';
+    out.push(`<div class="grp${open ? ' open' : ''}${off ? ' off' : ''}" data-layer="${L.id}"><div class="grow"><button class="exp" data-act="exp" aria-expanded="${open}" aria-label="${L.name} 목록 펼치기">${icon('chev')}</button><span class="gi">${icon(L.icon)}</span><span class="gn">${L.name}</span><span class="gc num">${items.length}</span><button class="eye" data-act="layer" aria-label="${L.name} ${off ? '보이기' : '숨기기'}">${icon(off ? 'eyeoff' : 'eye')}</button></div><div class="gitems">${rows}</div></div>`);
+  }
+  $('#tree').innerHTML = out.join('') || '<p class="empty" style="padding:8px 10px">찾는 이름이 없어요</p>';
+  $('#objCount').textContent = Model.items.length; $('#tabObjCnt').textContent = Model.items.length;
+  $('#btnShowAll').disabled = !(Model.hiddenItems.size || Model.hiddenLayers.size || Model.isolate != null);
+}
+function markTreeSel() { $$('#tree .row').forEach(r => r.classList.toggle('sel', +r.dataset.id === sel.item)); }
+$('#q').addEventListener('input', renderTree);
+$('#tree').addEventListener('click', e => {
+  const grp = e.target.closest('.grp'); if (!grp) return;
+  const act = e.target.closest('[data-act]')?.dataset.act; const row = e.target.closest('.row');
+  if (act === 'exp' || (!act && !row && e.target.closest('.grow'))) { const id = grp.dataset.layer; openLayers.has(id) ? openLayers.delete(id) : openLayers.add(id); renderTree(); return; }
+  if (act === 'layer') return toggleLayer(grp.dataset.layer);
+  if (act === 'item') return toggleItem(+row.dataset.id);
+  if (row) { const id = +row.dataset.id; if (!Model.itemVisible(Model.items[id])) toggleItem(id); setSelection(id); if (isPhone()) setSheet(false); }
+});
+$('#tree').addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('row')) { e.preventDefault(); e.target.click(); } });
+$('#btnShowAll').addEventListener('click', showAll);
+
+let colorScope = 'part';
+function swatchHtml(cur) {
+  return `<div class="sw">${SWATCHES.map(s => `<button data-sw="${s.v}" aria-pressed="${cur === s.v}" title="${s.n}" aria-label="${s.n}" style="${s.img ? `background-image:url(${s.img})` : `background:${s.v}`}"></button>`).join('')}<button class="custom" title="직접 고르기" aria-label="색 직접 고르기"><input type="color" data-custom value="${/^#/.test(cur || '') ? cur : '#8899aa'}"></button><button class="reset" data-sw="" title="원래 재질" aria-label="원래 재질로">${icon('reset', 'ic s')}</button></div>`;
+}
+function scopeHtml(p) {
+  const n = Model.parts.filter(q => q.origKey === p.origKey).length;
+  return `<div class="swl"><span>적용 범위</span></div><div class="seg" data-scope><button data-sc="part" aria-pressed="${colorScope === 'part'}">이 부분만</button><button data-sc="same" aria-pressed="${colorScope === 'same'}">같은 재질 전체 ${n}곳</button></div>`;
+}
+function partSwatchStyle(p) {
+  const m = matFor(p.matKey).material;
+  if (m.map?.image?.src) return `background-image:url(${m.map.image.src})`;
+  if (m.map) return `background:#c9a27e`;
+  return `background:#${m.color.getHexString()}`;
+}
+function renderProps() {
+  const el = $('#props');
+  if (!Model.items.length) { el.innerHTML = ''; return; }
+  const box = Model.worldBox(); const sz = box.getSize(new V3());
+  const perfSec = `<section class="sec" id="perfSec"><h3>${icon('gauge', 'ic s')}휴대폰·카카오톡 최적화<span class="r" id="perfEnv"></span></h3>
+    <div class="perf-row"><span>화질(픽셀 비율)</span><div class="seg mini" data-pr>${[1, 1.5, 2].map(v => `<button data-prv="${v}" aria-pressed="${Math.abs(Q.pr - v) < 0.13}">${v}x</button>`).join('')}</div></div>
+    <div class="perf-row"><span>그림자</span><button class="tg" data-tg="shadow" aria-pressed="${Q.shadow}" aria-label="그림자"></button></div>
+    <div class="perf-row"><span>지오메트리 병합 <b class="num" id="perfMerge"></b></span><button class="tg" data-tg="merge" aria-pressed="${Q.merge}" aria-label="지오메트리 병합"></button></div>
+    <div class="perf-row"><span>외곽선</span><button class="tg" data-tg="edges" aria-pressed="${Q.edges}" aria-label="외곽선"></button></div>
+    <div class="perf-row"><span>그리는 방식</span><b>움직일 때만 그림</b></div>
+    <div class="timing" id="perfTiming"></div></section>`;
+  const mSec = `<section class="sec" id="mSec"><h3>${icon('ruler', 'ic s')}측정<span class="r">${measures.length ? `<button class="txtbtn" data-act="mclearall">모두 지우기</button>` : ''}</span></h3><div id="mList"></div></section>`;
+  if (sel.item == null) {
+    el.innerHTML = `<section class="sec"><h3>${icon('info', 'ic s')}모델 정보</h3>
+      <dl class="kv">
+        <dt>파일</dt><dd>${esc(Model.source.file)} <span class="chip">${Model.source.fmt}</span></dd>
+        <dt>객체</dt><dd class="num">${Model.items.length}개 · 부분 ${Model.parts.length}개</dd>
+        <dt>면</dt><dd class="num">삼각형 ${Model.tris.toLocaleString()}개</dd>
+        <dt>크기</dt><dd class="num">${sz.x.toFixed(1)} × ${sz.z.toFixed(1)} m · 높이 ${sz.y.toFixed(2)} m</dd>
+        <dt>단위</dt><dd><select class="unit" id="unitSel" aria-label="단위">${['auto', 'm', 'cm', 'mm'].map(u => `<option value="${u}"${Model.unit === u ? ' selected' : ''}>${u === 'auto' ? `자동 (${Model.unitGuess})` : u}</option>`).join('')}</select> <button class="txtbtn" data-act="zup" style="margin-left:4px" title="스케치업처럼 Z축이 위쪽인 파일이 누워 보이면 눌러 주세요">${Model.zUp ? '축 원래대로' : '누워 보이면 축 돌리기'}</button></dd>
+      </dl>
+      <div style="margin-top:12px" class="edit-only"><div class="seg" data-sample><button data-smp="house-obj" aria-pressed="${Model.source.id === 'house-obj'}">샘플 OBJ</button><button data-smp="house-dae" aria-pressed="${Model.source.id === 'house-dae'}">샘플 DAE</button></div></div>
+    </section>
+    <section class="sec edit-only"><h3>${icon('upload', 'ic s')}내 파일로 해보기</h3>
+      <div class="drop-mini" data-act="open" role="button" tabindex="0">${icon('upload')}<div><b>OBJ·DAE 끌어다 놓기</b> 또는 눌러서 찾기</div><div>OBJ는 MTL·텍스처를 같이 골라 주세요<br>서버로 보내지 않고 이 브라우저에서만 열어요</div></div>
+    </section>${mSec}${perfSec}
+    <section class="sec"><h3>${icon('layers', 'ic s')}2차에 붙일 자리 (구조만 준비)</h3>
+      <div class="mlist">${[['door', '문·창문 교체·이동', '편집 도구 목록(TOOLS)에 추가'], ['lock', '로그인·유료 구독', '기능별 권한 확인(FEATURES)'], ['upload', '파일 업로드·저장', '모델 출처(ModelSource)를 서버로']].map(([ic, t, d]) => `<div class="mrow" style="height:auto;padding:9px 12px"><span class="gi" style="width:28px;height:28px">${icon(ic, 'ic s')}</span><div><b style="font-size:13px">${t}</b><div class="empty" style="font-size:12px">${d}</div></div></div>`).join('')}</div>
+    </section>`;
+  } else {
+    const it = Model.items[sel.item]; const L = LAYER_BY[it.layer];
+    const p = Model.parts[sel.part];
+    const isz = it.box.getSize(new V3());
+    const cur = Model.overrides.get(p.id) || null;
+    const partsHtml = it.parts.length > 1 ? `<div class="parts">${it.parts.map(pid => { const q = Model.parts[pid]; return `<button class="pchip" data-part="${pid}" aria-pressed="${pid === sel.part}"><i style="${partSwatchStyle(q)}"></i>${esc(matLabel(Model.mats.get(q.origKey)?.material.name || q.origKey))}</button>`; }).join('')}</div>` : '';
+    const dw = (it.layer === 'door' || it.layer === 'window') ? `<div class="note2">${icon('lock')}<span>문·창문 교체·이동은 2차 범위예요. 이 버튼 자리에 편집 도구를 붙이도록 구조를 나눠 뒀어요.</span></div>` : '';
+    el.innerHTML = `<section class="sec"><div class="selhead"><span class="gi">${icon(L.icon)}</span><div style="min-width:0"><div class="selname">${esc(it.label)}</div><div class="selsub">${L.name} · 원본 이름 ${esc(it.name)}</div></div><button class="selx" data-act="desel" aria-label="선택 해제">${icon('x')}</button></div></section>
+      <section class="sec edit-only"><h3>${icon('palette', 'ic s')}재질 색<span class="r" style="color:var(--ink2)">${esc(matFor(p.matKey).label)}</span></h3>${partsHtml}${swatchHtml(cur)}${scopeHtml(p)}</section>
+      <section class="sec"><h3>${icon('fit', 'ic s')}크기</h3><dl class="kv"><dt>가로</dt><dd class="num">${isz.x.toFixed(2)} m</dd><dt>세로(깊이)</dt><dd class="num">${isz.z.toFixed(2)} m</dd><dt>높이</dt><dd class="num">${isz.y.toFixed(2)} m</dd></dl></section>
+      <section class="sec"><div class="acts"><button class="btn line" data-act="hide">${icon('eyeoff')}숨기기</button><button class="btn line" data-act="isolate">${icon('isolate')}${Model.isolate === it.id ? '전체 보기' : '이것만 보기'}</button><button class="btn line" data-act="focus" style="grid-column:1/-1">${icon('fit')}이 객체로 화면 맞추기</button></div>${dw}</section>${mSec}${perfSec}`;
+  }
+  renderMeasures(); updatePerf();
+}
+function renderMeasures() {
+  const el = $('#mList'); if (!el) return;
+  el.innerHTML = measures.length ? `<div class="mlist">${measures.map((m, i) => `<div class="mrow"><span class="n">${i + 1}</span><b class="num">${m.a.distanceTo(m.b).toFixed(2)} m</b><span class="empty num">높이차 ${Math.abs(m.a.y - m.b.y).toFixed(2)} m</span><button class="eye" data-mdel="${i}" aria-label="${i + 1}번 측정 지우기">${icon('trash')}</button></div>`).join('')}</div>` : `<p class="empty">아래 툴바의 <b>측정</b>을 누르고 두 점을 찍어 보세요.</p>`;
+  const h = $('#mSec .r'); if (h) h.innerHTML = measures.length ? `<button class="txtbtn" data-act="mclearall">모두 지우기</button>` : '';
+}
+$('#props').addEventListener('click', e => {
+  const t = e.target;
+  const sw = t.closest('[data-sw]'); if (sw) return applyColor(sw.dataset.sw || null);
+  const sc = t.closest('[data-sc]'); if (sc) { colorScope = sc.dataset.sc; renderProps(); return; }
+  const pc = t.closest('[data-part]'); if (pc) { sel.part = +pc.dataset.part; renderProps(); return; }
+  const md = t.closest('[data-mdel]'); if (md) return removeMeasure(+md.dataset.mdel);
+  const smp = t.closest('[data-smp]'); if (smp) { if (smp.dataset.smp !== Model.source.id) loadSample(smp.dataset.smp); return; }
+  const prv = t.closest('[data-prv]'); if (prv) { Q.pr = Math.min(+prv.dataset.prv, window.devicePixelRatio || 1) || 1; Q.prLocked = true; renderer.setPixelRatio(Q.pr); resize(); renderProps(); return; }
+  const tg = t.closest('[data-tg]');
+  if (tg) {
+    if (tg.dataset.tg === 'shadow') { Q.shadow = !Q.shadow; applyShadow(); }
+    if (tg.dataset.tg === 'edges') { Q.edges = !Q.edges; rebuildEdges(); requestRender(); }
+    if (tg.dataset.tg === 'merge') { Q.merge = !Q.merge; rebuild(); toast(Q.merge ? '병합을 켰어요 · 드로우콜이 줄어요' : '병합을 껐어요 · 객체마다 따로 그려요'); }
+    renderProps(); return;
+  }
+  const act = t.closest('[data-act]')?.dataset.act;
+  if (act) doAct(act);
+});
+$('#props').addEventListener('input', e => { if (e.target.matches('[data-custom]')) applyColorThrottled(e.target.value); });
+$('#props').addEventListener('change', e => {
+  if (e.target.id === 'unitSel') { Model.unit = e.target.value; clearMeasures(true); applyTransform(); rebuild(); drawHighlight(); setView(curView || '3d', 0); renderProps(); toast('단위를 바꿨어요 · 측정은 다시 해 주세요'); }
+});
+let ccTimer = 0;
+function applyColorThrottled(v) { clearTimeout(ccTimer); ccTimer = setTimeout(() => applyColor(v), 120); }
+
+function updatePerf() {
+  const env = $('#perfEnv'); if (env) env.textContent = `${envLabel} · ${Q.label}`;
+  const mg = $('#perfMerge'); if (mg) mg.textContent = Q.merge ? `${Model.parts.length} → ${Model.meshCount}` : `꺼짐 · ${Model.meshCount}`;
+  const tm = $('#perfTiming');
+  if (tm) tm.innerHTML = [['받기', perf.t.dl], ['해석', perf.t.parse], ['병합', perf.t.merge], ['전체', perf.loadMs]].map(([k, v]) => `<div><span>${k}</span><b class="num">${v == null ? '-' : v < 1000 ? Math.round(v) + 'ms' : (v / 1000).toFixed(2) + 's'}</b></div>`).join('');
+  $$('[data-prv]').forEach(b => b.setAttribute('aria-pressed', Math.abs(Q.pr - +b.dataset.prv) < 0.13));
+}
+
+/* HUD: FPS·로딩 시간·드로우콜·화질 + 자동 화질 조절 */
+const hud = $('#hud'), hudText = $('#hudText');
+function updateHud() {
+  const now = performance.now();
+  const live = now - perf.last < 350;
+  if (live && perf.iv.length > 5) { const avg = perf.iv.reduce((a, b) => a + b, 0) / perf.iv.length; perf.fps = Math.min(120, Math.round(1000 / avg)); }
+  hud.classList.toggle('live', live);
+  const fps = perf.fps ? `<b class="num">${perf.fps}</b> FPS` : '측정 중';
+  hud.title = live ? '초록 점: 지금 그리는 중' : '회색 점: 움직임이 없어서 그리기를 멈춤 (배터리 절약)';
+  const calls = renderer.info.render.calls;
+  hudText.innerHTML = `${fps} · 로딩 <b class="num">${perf.loadMs ? (perf.loadMs / 1000).toFixed(2) + '초' : '-'}</b>${isPhone() ? '' : ` · 드로우콜 <b class="num">${calls}</b>`} · 화질 <b class="num">${Q.pr.toFixed(Q.pr % 1 ? 2 : 0).replace(/0$/, '')}x</b>${ENV.kakao ? ' · <span class="env">카카오톡</span>' : ''}`;
+  // 자동 화질: 버벅이면(평균 40fps 미만) 픽셀비율을 한 단계 낮추고, 여유가 있으면 다시 올림
+  if (live && perf.iv.length >= 30 && !Q.prLocked) {
+    if (perf.fps < 40 && Q.pr > 1) { perf.drops++; if (perf.drops >= 3) { Q.pr = Math.max(1, Q.pr - 0.25); renderer.setPixelRatio(Q.pr); resize(); perf.iv = []; perf.drops = 0; toast('화면이 버벅여서 화질을 한 단계 낮췄어요'); updatePerf(); } }
+    else perf.drops = 0;
+  }
+  updatePerf();
+}
+setInterval(updateHud, 500);
+
+/* 힌트·토스트 */
+let hintT = 0;
+function showHint() {
+  $('#hintText').textContent = ENV.mobile || isPhone() ? '한 손가락 회전 · 두 손가락 이동 · 핀치 확대 · 탭해서 선택' : '드래그 회전 · 오른쪽 드래그 이동 · 휠 확대 · 클릭해서 선택';
+  $('#hint').classList.remove('hide'); clearTimeout(hintT); hintT = setTimeout(hideHint, 3500);
+}
+function hideHint() { $('#hint').classList.add('hide'); }
+let toastT = 0;
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 2400); }
+
+/* 색 팝오버 (툴바·빠른 메뉴에서 열림) */
+function renderColorPop() {
+  const pop = $('#colorPop'); if (pop.hidden || sel.part == null) return;
+  const p = Model.parts[sel.part]; const it = Model.items[sel.item];
+  $('#cpTitle').textContent = it.label; $('#cpSub').textContent = '· ' + matFor(p.matKey).label;
+  $('.cpBody', pop).innerHTML = swatchHtml(Model.overrides.get(p.id) || null) + scopeHtml(p);
+}
+function openColorPop() { if (sel.part == null) return; $('#colorPop').hidden = false; stage.classList.add('coloring'); closeMore(); renderColorPop(); }
+function closePop() { $('#colorPop').hidden = true; stage.classList.remove('coloring'); }
+$('#colorPop').addEventListener('click', e => {
+  const sw = e.target.closest('[data-sw]'); if (sw) return applyColor(sw.dataset.sw || null);
+  const sc = e.target.closest('[data-sc]'); if (sc) { colorScope = sc.dataset.sc; renderColorPop(); renderProps(); return; }
+  if (e.target.closest('[data-act=cpclose]')) closePop();
+});
+$('#colorPop').addEventListener('input', e => { if (e.target.matches('[data-custom]')) applyColorThrottled(e.target.value); });
+
+/* 더보기 (휴대폰) */
+function closeMore() { $('#moreMenu').hidden = true; $$('[data-act=more]').forEach(b => b.setAttribute('aria-expanded', 'false')); }
+function toggleMore() { const m = $('#moreMenu'); m.hidden = !m.hidden; closePop(); $$('[data-act=more]').forEach(b => b.setAttribute('aria-expanded', String(!m.hidden))); }
+$('#moreMenu').addEventListener('click', e => { const a = e.target.closest('[data-act]')?.dataset.act; if (!a) return; closeMore(); doAct(a); });
+
+function doAct(a) {
+  switch (a) {
+    case 'fit': { const b = sel.item != null ? Model.items[sel.item].box : Model.visibleBox(); fitTo(b); break; }
+    case 'focus': if (sel.item != null) fitTo(Model.items[sel.item].box); break;
+    case 'hide': hideItem(sel.item); break;
+    case 'isolate': if (sel.item != null) isolateItem(sel.item); break;
+    case 'color': openColorPop(); break;
+    case 'desel': setSelection(null); break;
+    case 'undo': History.undo(); break;
+    case 'more': toggleMore(); break;
+    case 'mclear': History.push(); clearMeasures(); break;
+    case 'mclearall': History.push(); clearMeasures(true); renderProps(); break;
+    case 'mdone': setTool('orbit'); renderProps(); break;
+    case 'showall': showAll(); break;
+    case 'resetall': resetAll(); break;
+    case 'open': $('#file').click(); break;
+    case 'zup': Model.zUp = !Model.zUp; clearMeasures(true); applyTransform(); rebuild(); drawHighlight(); setView('3d', 0); renderProps(); break;
+    case 'sheetprops': setSelection(null); setTab('props'); setSheet(true); break;
+  }
+}
+$('#toolbar').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.tool) return setTool(b.dataset.tool === tool && tool === 'measure' ? 'orbit' : b.dataset.tool);
+  if (b.dataset.act) doAct(b.dataset.act);
+});
+$('#quick').addEventListener('click', e => { const a = e.target.closest('[data-act]')?.dataset.act; if (a) doAct(a); });
+$$('.vseg button').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
+$('#btnHome').addEventListener('click', () => { if (sharedCam) { flyTo(sharedCam.pos, sharedCam.target); clearViewChips(); } else setView('3d'); });
+$('#btnOpen').addEventListener('click', () => $('#file').click());
+$('#file').addEventListener('change', e => { loadFiles(e.target.files); e.target.value = ''; });
+$('#btnObjToggle').addEventListener('click', () => $('#panelObjects').classList.toggle('show'));
+
+/* 공유 모달 */
+$('#btnShare').addEventListener('click', openShare);
+$('#shRo').addEventListener('click', e => { const b = e.currentTarget; b.setAttribute('aria-pressed', String(b.getAttribute('aria-pressed') !== 'true')); updateShareLink(); });
+$('#shCopy').addEventListener('click', async () => {
+  const ok = await copyText($('#shUrl').value);
+  if (ok) { toast('링크를 복사했어요 · 카카오톡에 붙여 넣으면 돼요'); $('#shCopy').innerHTML = icon('check') + '복사됨'; setTimeout(() => $('#shCopy').innerHTML = icon('copy') + '복사', 1800); }
+  else { const i = $('#shUrl'); i.focus(); i.select(); toast('자동 복사가 막혀 있어요 · 링크를 길게 눌러 복사해 주세요'); }
+});
+$('#shNative').addEventListener('click', () => navigator.share?.({ title: Model.source?.name + ' · 3D 보기', url: $('#shUrl').value }).catch(() => {}));
+$('#shareModal').addEventListener('click', e => { if (e.target.id === 'shareModal' || e.target.closest('[data-act=shclose]')) $('#shareModal').hidden = true; });
+addEventListener('keydown', e => {
+  if (e.key === 'Escape') { $('#shareModal').hidden = true; closePop(); closeMore(); if (tool === 'measure') setTool('orbit'); else if (sel.item != null) setSelection(null); }
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z' && !e.target.matches('input')) { e.preventDefault(); History.undo(); }
+});
+
+/* 끌어다 놓기 */
+let dragN = 0;
+addEventListener('dragenter', e => { if (!e.dataTransfer?.types?.includes('Files') || document.body.classList.contains('ro')) return; e.preventDefault(); dragN++; $('#drop').hidden = false; });
+addEventListener('dragover', e => { if (e.dataTransfer?.types?.includes('Files')) e.preventDefault(); });
+addEventListener('dragleave', () => { dragN = Math.max(0, dragN - 1); if (!dragN) $('#drop').hidden = true; });
+addEventListener('drop', e => { e.preventDefault(); dragN = 0; $('#drop').hidden = true; if (document.body.classList.contains('ro')) return; if (e.dataTransfer?.files?.length) loadFiles(e.dataTransfer.files); });
+
+/* 휴대폰 바텀시트 */
+const sheet = $('#sheet'); let sheetOpen = false, curTab = 'props';
+function placePanels() {
+  const phone = isPhone();
+  const body = $('#sheetBody');
+  if (phone && !body.contains($('#panelProps'))) { body.append($('#panelObjects'), $('#panelProps')); setTab(curTab); }
+  if (!phone && body.contains($('#panelProps'))) { stage.append($('#panelObjects'), $('#panelProps')); $('#panelObjects').classList.remove('cur'); $('#panelProps').classList.remove('cur'); setSheet(false); }
+}
+function setTab(t) {
+  curTab = t;
+  $$('.sh-tabs [data-tab]').forEach(b => b.setAttribute('aria-pressed', b.dataset.tab === t));
+  $('#panelObjects').classList.toggle('cur', t === 'objects'); $('#panelProps').classList.toggle('cur', t === 'props');
+}
+function setSheet(open) {
+  sheetOpen = open;
+  const h = open ? Math.round(stage.clientHeight * 0.62) : 84;
+  document.documentElement.style.setProperty('--sheet-h', h + 'px');
+  $('#toolbar').classList.toggle('away', open && isPhone());
+  if (open) { closePop(); closeMore(); }
+}
+$$('.sh-tabs [data-tab]').forEach(b => b.addEventListener('click', () => { setTab(b.dataset.tab); if (!sheetOpen) setSheet(true); }));
+(() => { // 손잡이 끌기
+  const hd = $('#sheetHandle'); let y0 = 0, h0 = 0, moved = false;
+  hd.addEventListener('pointerdown', e => { y0 = e.clientY; h0 = sheet.getBoundingClientRect().height; moved = false; hd.setPointerCapture(e.pointerId); sheet.classList.add('drag'); });
+  hd.addEventListener('pointermove', e => { if (!hd.hasPointerCapture(e.pointerId)) return; const d = y0 - e.clientY; if (Math.abs(d) > 4) moved = true; const h = Math.max(84, Math.min(stage.clientHeight * 0.85, h0 + d)); document.documentElement.style.setProperty('--sheet-h', h + 'px'); });
+  hd.addEventListener('pointerup', e => { sheet.classList.remove('drag'); if (!moved) return setSheet(!sheetOpen); const h = sheet.getBoundingClientRect().height; setSheet(h > 84 + (stage.clientHeight * 0.62 - 84) * 0.35); });
+})();
+addEventListener('resize', () => { placePanels(); if (isPhone()) setSheet(sheetOpen); else document.documentElement.style.setProperty('--sheet-h', '0px'); });
+
+/* ---------- 시작 ---------- */
+const share = ShareCodec.decode(location.hash);
+if (share?.r) document.body.classList.add('ro');
+if (share) pendingShare = share;
+$('#btnEditMode').addEventListener('click', e => { e.preventDefault(); location.hash = ShareCodec.encode(false).split('#')[1]; });
+placePanels(); if (isPhone()) setSheet(false);
+resize();
+loadSample(share && SAMPLES[share.s] ? share.s : (qp.get('sample') === 'dae' ? 'house-dae' : 'house-obj'));
+addEventListener('hashchange', () => { const s = ShareCodec.decode(location.hash); if (s) { document.body.classList.toggle('ro', !!s.r); applyShare(s); renderProps(); } });
+
+/* 테스트·검수용 핸들 (화면에는 영향 없음) */
+window.PF = { Model, Q, ENV, perf, camera, controls, scene, sun, loadFiles, setSelection, applyColor, hideItem, toggleLayer, isolateItem, setView, setTool, addMeasure, measures, ShareCodec, openShare, setSheet, setTab, onTap, toScreen, renderer, loadSample, sel, get tool() { return tool; } };
+</script>
+</body>
+</html>

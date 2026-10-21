@@ -1,0 +1,214 @@
+# Planfold demo sample house materials
+
+newmtl wall_exterior
+Ka 0 0 0
+Kd 0.93 0.92 0.89
+Ks 0.04 0.04 0.04
+Ns 20
+d 1
+illum 2
+
+newmtl wall_interior
+Ka 0 0 0
+Kd 0.97 0.97 0.96
+Ks 0.04 0.04 0.04
+Ns 20
+d 1
+illum 2
+
+newmtl concrete
+Ka 0 0 0
+Kd 0.72 0.72 0.71
+Ks 0.04 0.04 0.04
+Ns 20
+d 1
+illum 2
+
+newmtl deck_wood
+Ka 0 0 0
+Kd 0.7 0.64 0.58
+Ks 0.04 0.04 0.04
+Ns 20
+d 1
+illum 2
+map_Kd oak.jpg
+
+newmtl floor_oak
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.04 0.04 0.04
+Ns 20
+d 1
+illum 2
+map_Kd oak.jpg
+
+newmtl floor_oak_light
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.04 0.04 0.04
+Ns 20
+d 1
+illum 2
+map_Kd oak_light.jpg
+
+newmtl floor_tile
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.04 0.04 0.04
+Ns 20
+d 1
+illum 2
+map_Kd tile.jpg
+
+newmtl floor_tile_dark
+Ka 0 0 0
+Kd 0.8 0.81 0.83
+Ks 0.04 0.04 0.04
+Ns 20
+d 1
+illum 2
+map_Kd tile.jpg
+
+newmtl window_frame
+Ka 0 0 0
+Kd 0.3 0.32 0.35
+Ks 0.04 0.04 0.04
+Ns 20
+d 1
+illum 2
+
+newmtl glass
+Ka 0 0 0
+Kd 0.72 0.84 0.92
+Ks 0.04 0.04 0.04
+Ns 20
+d 0.28
+illum 2
+
+newmtl door_frame
+Ka 0 0 0
+Kd 0.95 0.95 0.94
+Ks 0.04 0.04 0.04
+Ns 20
+d 1
+illum 2
+
+newmtl door_leaf
+Ka 0 0 0
+Kd 0.84 0.74 0.62
+Ks 0.04 0.04 0.04
+Ns 20
+d 1
+illum 2
+
+newmtl door_front
+Ka 0 0 0
+Kd 0.22 0.25 0.29
+Ks 0.04 0.04 0.04
+Ns 20
+d 1
+illum 2
+
+newmtl metal_dark
+Ka 0 0 0
+Kd 0.2 0.21 0.23
+Ks 0.04 0.04 0.04
+Ns 20
+d 1
+illum 2
+
+newmtl fabric_sofa
+Ka 0 0 0
+Kd 0.56 0.6 0.65
+Ks 0.04 0.04 0.04
+Ns 20
+d 1
+illum 2
+
+newmtl fabric_chair
+Ka 0 0 0
+Kd 0.86 0.82 0.76
+Ks 0.04 0.04 0.04
+Ns 20
+d 1
+illum 2
+
+newmtl fabric_bed
+Ka 0 0 0
+Kd 0.97 0.97 0.96
+Ks 0.04 0.04 0.04
+Ns 20
+d 1
+illum 2
+
+newmtl fabric_blanket
+Ka 0 0 0
+Kd 0.62 0.7 0.8
+Ks 0.04 0.04 0.04
+Ns 20
+d 1
+illum 2
+
+newmtl wood_furniture
+Ka 0 0 0
+Kd 0.74 0.58 0.42
+Ks 0.04 0.04 0.04
+Ns 20
+d 1
+illum 2
+
+newmtl rug
+Ka 0 0 0
+Kd 0.86 0.82 0.75
+Ks 0.04 0.04 0.04
+Ns 20
+d 1
+illum 2
+
+newmtl tv_black
+Ka 0 0 0
+Kd 0.07 0.07 0.08
+Ks 0.04 0.04 0.04
+Ns 20
+d 1
+illum 2
+
+newmtl plant
+Ka 0 0 0
+Kd 0.36 0.56 0.36
+Ks 0.04 0.04 0.04
+Ns 20
+d 1
+illum 2
+
+newmtl ceramic
+Ka 0 0 0
+Kd 0.98 0.98 0.98
+Ks 0.04 0.04 0.04
+Ns 20
+d 1
+illum 2
+
+newmtl appliance
+Ka 0 0 0
+Kd 0.86 0.87 0.89
+Ks 0.04 0.04 0.04
+Ns 20
+d 1
+illum 2
+
+newmtl cabinet
+Ka 0 0 0
+Kd 0.9 0.9 0.9
+Ks 0.04 0.04 0.04
+Ns 20
+d 1
+illum 2
+
+newmtl counter_top
+Ka 0 0 0
+Kd 0.3 0.31 0.33
+Ks 0.04 0.04 0.04
+Ns 20
+d 1
+illum 2
