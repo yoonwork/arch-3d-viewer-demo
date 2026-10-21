@@ -26,7 +26,7 @@ illum 2
 
 newmtl deck_wood
 Ka 0 0 0
-Kd 0.7 0.64 0.58
+Kd 0.8 0.78 0.76
 Ks 0.04 0.04 0.04
 Ns 20
 d 1
@@ -95,7 +95,7 @@ illum 2
 
 newmtl door_leaf
 Ka 0 0 0
-Kd 0.84 0.74 0.62
+Kd 0.8 0.74 0.66
 Ks 0.04 0.04 0.04
 Ns 20
 d 1
@@ -151,7 +151,7 @@ illum 2
 
 newmtl wood_furniture
 Ka 0 0 0
-Kd 0.74 0.58 0.42
+Kd 0.66 0.56 0.46
 Ks 0.04 0.04 0.04
 Ns 20
 d 1

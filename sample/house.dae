@@ -63,7 +63,7 @@
 </lambert></technique></profile_COMMON></effect>
 <effect id="fx-door_leaf"><profile_COMMON>
 <technique sid="common"><lambert>
-<diffuse><color>0.84 0.74 0.62 1</color></diffuse>
+<diffuse><color>0.80 0.74 0.66 1</color></diffuse>
 </lambert></technique></profile_COMMON></effect>
 <effect id="fx-door_front"><profile_COMMON>
 <technique sid="common"><lambert>
@@ -91,7 +91,7 @@
 </lambert></technique></profile_COMMON></effect>
 <effect id="fx-wood_furniture"><profile_COMMON>
 <technique sid="common"><lambert>
-<diffuse><color>0.74 0.58 0.42 1</color></diffuse>
+<diffuse><color>0.66 0.56 0.46 1</color></diffuse>
 </lambert></technique></profile_COMMON></effect>
 <effect id="fx-rug"><profile_COMMON>
 <technique sid="common"><lambert>
