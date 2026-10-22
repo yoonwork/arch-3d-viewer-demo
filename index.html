@@ -9,6 +9,14 @@
 <meta name="color-scheme" content="only light">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' rx='8' fill='%232457F5'/%3E%3Cpath d='M8 10l6-3 6 3v8l-6 3-6-3z' fill='none' stroke='white' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E">
 <title>샘플 단독주택 A안 · Planfold 3D 뷰어 데모</title>
+<!-- 카카오톡·메신저에 링크를 붙였을 때 제목·미리보기 (1차에선 모델마다 따로 만들어요) -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="샘플 단독주택 A안 · 3D로 보기">
+<meta property="og:description" content="돌려 보고, 평면에서 방 면적을 보고, 치수를 재고, 링크로 공유하는 건축 3D 뷰어 제안용 데모예요. Planfold는 가상 서비스명, 샘플은 예시 모델이에요.">
+<meta property="og:image" content="https://yoonwork.github.io/arch-3d-viewer-demo/sample/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" media="print" onload="this.media='all'">
 <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.min.js" crossorigin>
@@ -147,6 +155,23 @@ body.lp-open{--cx:calc(50% + 152px)}
 .mlabel.pending{color:var(--mut)}
 .ntag{position:absolute;z-index:4;transform:translate(-50%,-100%);background:var(--card);box-shadow:var(--sh-btn);border-radius:var(--r-sm);padding:4px 8px;font-size:var(--fs-12);font-weight:600;color:var(--ink);white-space:nowrap;line-height:14px;max-width:200px;overflow:hidden;text-overflow:ellipsis}
 .ntag:hover{background:var(--soft)}
+/* 평면 = 도면: 방 이름·면적, 바깥 치수 (위에서 내려다볼 때만, 모델에서 직접 계산) */
+.plan{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .25s ease}
+.plan.on{opacity:1}
+.plan svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.room{position:absolute;left:0;top:0;display:grid;justify-items:center;padding:4px 8px;border-radius:var(--r-sm);background:rgba(255,255,255,.9);box-shadow:0 0 0 1px var(--hair),0 2px 8px -2px rgba(16,24,40,.10);text-align:center;white-space:nowrap;line-height:16px;will-change:transform}
+.room b{font-size:var(--fs-13);font-weight:600;color:var(--ink);letter-spacing:-.01em}
+.room span{font-size:var(--fs-12);font-weight:500;color:var(--mut);font-variant-numeric:tabular-nums}
+.room.l2 .p,.room.l3 span{display:none}
+.room.l3{padding:2px 6px}
+.room.off{display:none}
+.dimlab{position:absolute;left:0;top:0;padding:2px 6px;border-radius:6px;background:var(--stage-mid);font-size:var(--fs-12);font-weight:600;color:var(--ink-2);font-variant-numeric:tabular-nums;white-space:nowrap;line-height:16px}
+.dimlab small{font-size:var(--fs-12);font-weight:500;color:var(--mut);margin-left:2px}
+.plansum{position:absolute;z-index:5;left:var(--cx);bottom:calc(var(--dock-b) + var(--dock-h) + 12px);transform:translate(-50%,6px);display:flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:var(--r-pill);background:var(--float-bg);box-shadow:var(--sh-btn);font-size:var(--fs-13);color:var(--ink-2);white-space:nowrap;font-variant-numeric:tabular-nums;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s}
+.plansum b{font-weight:700;color:var(--ink);font-size:var(--fs-14)}
+.plansum .sep{width:1px;height:12px;background:var(--line)}
+body.plan-on .plansum{opacity:1;transform:translate(-50%,0)}
+body.toasting .plansum,.sheet-open .plansum{opacity:0}
 
 /* ===== 공통 부품 (가이드 키트) ===== */
 .btn{--h:var(--h-md);display:inline-flex;align-items:center;justify-content:center;gap:6px;height:var(--h);padding:0 16px;border-radius:var(--r-pill);border:1px solid transparent;font-size:var(--fs-14);font-weight:600;line-height:1;white-space:nowrap;text-decoration:none;transition:background-color .15s,border-color .15s,color .15s}
@@ -213,6 +238,8 @@ body.lp-open{--cx:calc(50% + 152px)}
 .ro .tname .ic{display:none}
 .tmeta{display:flex;align-items:center;gap:4px;margin-top:4px;font-size:var(--fs-13);font-weight:400;color:var(--mut);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tmeta .ic{width:12px;height:12px;stroke-width:2}
+.demo-tag{display:inline-flex;align-items:center;gap:6px;height:24px;margin-top:8px;padding:0 8px;border-radius:6px;background:rgba(25,31,40,.05);font-size:var(--fs-12);font-weight:500;color:var(--ink-2);white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.demo-tag i{width:6px;height:6px;border-radius:50%;background:var(--warn-dot);flex:none}
 .objbox{display:flex;flex-direction:column;min-height:0;flex:1;border-top:1px solid var(--line-2)}
 .ohead{display:flex;align-items:center;gap:4px;height:44px;padding:4px 12px 0;flex:none}
 .otoggle{display:flex;align-items:center;gap:6px;height:32px;padding:0 8px;margin-right:auto;border-radius:var(--r-sm);font-size:var(--fs-14);font-weight:600;color:var(--ink)}
@@ -428,11 +455,19 @@ select.sel:focus{outline:0;border-color:var(--brand);box-shadow:var(--ring)}
   .menu hr.ph-only{display:block!important}
   .home-f.ph-only{display:grid!important}
   .ib::after{content:"";position:absolute;inset:-2px;border-radius:50%}
-  .scrim-top{position:absolute;z-index:5;top:0;left:0;right:0;height:88px;background:linear-gradient(rgba(244,245,247,.96),rgba(244,245,247,.86) 45%,rgba(244,245,247,0));pointer-events:none}
+  .scrim-top{position:absolute;z-index:5;top:0;left:0;right:0;height:112px;background:linear-gradient(rgba(244,245,247,.96),rgba(244,245,247,.86) 50%,rgba(244,245,247,0));pointer-events:none}
   .lp{top:12px;left:var(--inset);right:calc(var(--inset) + 148px);width:auto;max-height:none;background:none;box-shadow:none;border-radius:0;overflow:visible}
   .ro .lp{right:calc(var(--inset) + 52px)}
   .tblock{padding:0}
+  .tname{position:relative}
+  .tname::after{content:"";position:absolute;inset:-8px -6px}   /* 제목(파일 메뉴) 누르는 곳 44px 이상 */
   .tname .ic{width:16px;height:16px}
+  .demo-tag{margin-top:6px;height:22px}
+  .dlg-f .btn{--h:44px}
+  #shList .sh-head .btn{--h:40px;position:relative}
+  #shList .sh-head .btn::after{content:"";position:absolute;inset:-2px 0}
+  #selBody .scope{padding:12px 0;margin-top:4px;align-items:center}
+  #selBody .sws button::after,#selBody .sws .swc::after{content:"";position:absolute;inset:-2px;border-radius:50%}
   .lp>.objbox{display:none}
   .tr{top:12px}
   .ro #btnShare{display:none}
@@ -518,6 +553,24 @@ select.sel:focus{outline:0;border-color:var(--brand);box-shadow:var(--ring)}
   .in-btn .btn{height:var(--h-cta);font-size:var(--fs-17)}
   .dlg-f{margin:12px -8px -4px}
 }
+/* 눌렀을 때 바로 느껴지는 반응 (휴대폰 손맛) */
+.vbtn,.dic,.dbtn,.ib,.btn,.cact i,.sws button,.eye,.grow,.row,.menu button{transition:background-color .15s,color .15s,transform .12s ease}
+.vbtn:active,.dic:active,.dbtn:active,.ib:active,.btn:active:not(:disabled),.cact:active i{transform:scale(.94)}
+.sws button:active{transform:scale(.9)}
+/* 터치 기기: 누른 뒤 마우스 올림 색이 남지 않게 (예: 평면 칩이 회색으로 남는 문제) */
+@media (hover:none){
+  .vbtn:hover,.dbtn:hover,.dic:hover{background:transparent;color:var(--ink-2)}
+  .vbtn[aria-pressed="true"]:hover{background:var(--brand);color:var(--on-brand)}
+  .ib:hover{background:var(--float-bg)}
+  .btn-primary:hover{background:var(--brand)}
+  .btn-soft:hover{background:#F3F4F6}
+  .btn-ghost:hover{background:transparent;color:var(--ink-2)}
+  .btn-secondary:hover{background:var(--card);border-color:var(--line)}
+  .grow:hover,.row:not(.sel):hover,.menu button:hover,.menu a:hover,.mrow:hover,.eye:hover,.tname:hover,.otoggle:hover{background:none}
+  #shList .grow:hover{background:#F5F6F8}
+  .sws button:hover{transform:none}
+}
+#shList .grow:active,.grow:active,.row:active,.menu button:active:not(:disabled){background:var(--track)}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition:none!important}}
 </style>
 </head>
@@ -564,6 +617,7 @@ select.sel:focus{outline:0;border-color:var(--brand);box-shadow:var(--ring)}
 <div class="app" id="app">
   <main class="stage" id="stage">
     <canvas id="c" aria-label="3D 모델 보기 화면. 드래그해서 돌리고, 휠로 확대해요" tabindex="0"></canvas>
+    <div class="plan" id="plan" aria-hidden="true"><svg id="planSvg"></svg><div id="planLabs"></div></div>
     <svg id="ov" aria-hidden="true"></svg>
     <div id="labels" aria-hidden="true"></div>
     <button class="ntag" id="nameTag" hidden title="화면 맞추기"></button>
@@ -574,6 +628,7 @@ select.sel:focus{outline:0;border-color:var(--brand);box-shadow:var(--ring)}
       <div class="tblock">
         <button class="tname" id="btnFile" aria-haspopup="menu" aria-expanded="false"><span id="fileName">샘플 단독주택 A안</span><svg class="ic"><use href="#i-chevd"/></svg></button>
         <p class="tmeta" id="fileMeta">OBJ</p>
+        <p class="demo-tag" title="Planfold는 가상 서비스명이고, 샘플 집과 그 숫자는 예시예요"><i></i>제안용 데모 · 샘플은 예시 모델</p>
       </div>
       <div class="objbox" id="objbox">
         <div class="ohead">
@@ -624,6 +679,7 @@ select.sel:focus{outline:0;border-color:var(--brand);box-shadow:var(--ring)}
     </div>
     <button class="ib home-f ph-only" id="btnHomeM" aria-label="처음 시점"><svg class="ic"><use href="#i-home"/></svg></button>
 
+    <p class="plansum" id="planSum"></p>
     <div class="hint hide" id="hint" aria-hidden="true"><svg class="ic"><use href="#i-hand"/></svg><span id="hintText"></span></div>
     <div class="hud" id="hud" hidden><i></i><span id="hudText">준비 중</span></div>
 
@@ -737,7 +793,8 @@ setTimeout(function(){ if(!window.__pfBooted){ var l=document.getElementById('ld
 
 <script type="module">
 /* ============================================================================
-   Planfold 3D 뷰어 데모 v4 — 한 파일 구성 (빌드 없음, three.js r169 CDN)
+   Planfold 3D 뷰어 데모 v5 — 한 파일 구성 (빌드 없음, three.js r169 CDN)
+   v5: 첫 등장(도면에서 벽이 솟아오름), 평면 = 도면(방 이름·㎡·평, 바깥 치수, 실내 합계), 제안용 데모 표시, 터치 44px·눌림 반응
    ----------------------------------------------------------------------------
    [1] 환경·품질   ENV / QUALITY        : 기기 판별(PC·휴대폰·카카오톡 인앱), 픽셀비율·그림자 정책
    [2] 뷰어 코어   LOOK / 렌더 루프       : 장면·카메라·조명, "움직일 때만 그리기", 패널에 따라 바뀌는 보이는 영역
@@ -834,7 +891,8 @@ const LOOK = {
   fovPC: 32, fovPhone: 36, fovOrtho: 20,
   yaw: 35, pitch: 32, pitchPhone: 44,   // 세로 화면은 조금 더 위에서 내려다봐 모델을 크게
   fillPC: 0.70, fillPhone: 0.92,
-  introMs: 500, viewMs: 450,
+  introMs: 1400, introYaw: -24, introDist: 1.12, viewMs: 450,   // 첫 등장: 살짝 옆에서 돌며 자리 잡기
+  riseDelay: 220, riseMs: 1050, riseFrom: 0.02,                 // 첫 등장: 도면처럼 납작한 상태에서 벽이 솟아오름
 };
 
 /* ---------- [1] 환경·품질 ---------- */
@@ -965,13 +1023,16 @@ let needRender = true, camAnim = null;
 const perf = { iv: [], last: 0, fps: 0, live: false, loadMs: 0, t: {}, firstPaint: 0, drops: 0, ups: 0 };
 function requestRender() { needRender = true; }
 controls.addEventListener('change', requestRender);
-let userMoved = false;
-controls.addEventListener('start', () => { camAnim = null; userMoved = true; hideHint(); });
+let userMoved = false, viewWatch = false;
+controls.addEventListener('start', () => { camAnim = null; userMoved = true; viewWatch = true; hideHint(); });
 function frame(now) {
   requestAnimationFrame(frame);
   let changed = controls.update();
   if (camAnim) { stepAnim(now); changed = true; }
+  if (rise) { stepRise(now); changed = true; }
   if (vo.anim) { stepVO(now); changed = true; }
+  // 손으로 돌려서 시점 칩과 화면이 달라지면 칩을 꺼요 (평면 칩이 눌린 채 3D로 보이지 않게)
+  if (viewWatch && curView && !camAnim && curDir().angleTo(viewDir(curView)) > 0.2) { viewWatch = false; clearViewChips(); }
   if (perf.burst > 0) { perf.burst--; changed = true; } // 불러온 직후 잠깐 연속으로 그려서 실제 FPS를 잼
   if (changed || needRender) {
     needRender = false;
@@ -1045,11 +1106,13 @@ function fitFor(box, dir, fill = fillOf(), fov = camera.fov) {
 }
 function markViews() { $$('.vbtn').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === curView))); }
 function setView(name, ms = LOOK.viewMs) {
-  curView = name; markViews(); updateGrid(); updateEdgeLook();
+  curView = name; viewWatch = false; markViews(); updateGrid(); updateEdgeLook();
+  if (ms > 0) hideHint();
   const box = Model.visibleBox();
   if (box.isEmpty()) return;
   const fov = viewFov(name);
-  const f = fitFor(box, viewDir(name), fillOf(), fov);
+  // 휴대폰 평면: 바깥 치수선이 들어갈 좌우 여백을 남김
+  const f = fitFor(box, viewDir(name), name === 'top' && isPhone() ? { w: 0.82, h: 0.9 } : fillOf(), fov);
   flyTo(f.pos, f.target, ms, fov);
 }
 function clearViewChips() { curView = null; markViews(); updateGrid(); updateEdgeLook(); }
@@ -1094,7 +1157,29 @@ const Model = {
   worldBox() { const b = new THREE.Box3(); for (const it of this.items) b.union(it.box); return b; },
   hiddenCount() { return this.hiddenItems.size + this.hiddenLayers.size + (this.isolate != null ? 1 : 0); },
 };
-scene.add(Model.root); Model.root.add(Model.draw);
+// riser: 첫 등장 때만 높이를 0 → 1로 키워 '도면에서 집이 솟아오르는' 연출 (바닥 y=0 기준이라 바닥은 제자리)
+const riser = new THREE.Group(); scene.add(riser);
+riser.add(Model.root); Model.root.add(Model.draw);
+let rise = null;
+function startRise() {
+  if (REDUCED) return;
+  rise = { t0: performance.now() + LOOK.riseDelay, ms: LOOK.riseMs };
+  riser.scale.y = LOOK.riseFrom; riser.updateMatrixWorld(true);
+  contact.material.opacity = 0; renderer.shadowMap.needsUpdate = true;
+}
+function stepRise(now) {
+  const k = Math.max(0, Math.min(1, (now - rise.t0) / rise.ms)); const e = EASE.inout(k);
+  riser.scale.y = LOOK.riseFrom + (1 - LOOK.riseFrom) * e;
+  contact.material.opacity = (Q.shadow ? 0.7 : 1) * EASE.out(k);
+  renderer.shadowMap.needsUpdate = true;
+  if (k >= 1) endRise();
+}
+function endRise() {
+  if (!rise) return;
+  rise = null; riser.scale.y = 1; riser.updateMatrixWorld(true);
+  contact.material.opacity = Q.shadow ? 0.7 : 1;
+  renderer.shadowMap.needsUpdate = true; requestRender();
+}
 
 function toStd(src, keyHint) {
   const opacity = src.opacity ?? 1;
@@ -1160,6 +1245,7 @@ function ingest(obj3d) {
 
 // 단위(mm·cm·m) 자동 판단 + 축 보정 + 가운데 맞춤
 function applyTransform() {
+  endRise();   // 상자 계산은 원래 높이 기준
   const s = Model.rawBox.getSize(new V3());
   const maxD = Math.max(s.x, s.y, s.z);
   Model.unitGuess = maxD >= 1000 ? 'mm' : maxD >= 100 ? 'cm' : 'm';
@@ -1178,6 +1264,7 @@ function applyTransform() {
     for (const pid of it.parts) it.box.union(Model.parts[pid].geom.boundingBox.clone().applyMatrix4(r.matrixWorld));
   }
   layoutGround();
+  buildPlan();
 }
 function layoutGround() {
   const b = Model.worldBox(); const s = b.getSize(new V3()); const c = b.getCenter(new V3());
@@ -1445,10 +1532,12 @@ function finishLoad(obj, source, t0, opts = {}) {
   rebuild();
   const shared = pendingShare; pendingShare = null;
   setView('3d', 0);
-  if (!shared && !REDUCED) { // 첫 등장: 8% 멀리서 500ms 다가옴
+  if (!shared && !REDUCED) { // 첫 등장: 도면처럼 납작한 집이 솟아오르고, 카메라는 살짝 옆에서 돌며 자리 잡음
     const end = camera.position.clone(), tg = controls.target.clone();
-    camera.position.sub(tg).multiplyScalar(1.08).add(tg); camera.lookAt(tg);
+    const off = end.clone().sub(tg).applyAxisAngle(new V3(0, 1, 0), deg(LOOK.introYaw)).multiplyScalar(LOOK.introDist);
+    camera.position.copy(tg).add(off); camera.lookAt(tg);
     flyTo(end, tg, LOOK.introMs, camera.fov, 'out');
+    startRise();
   }
   renderer.render(scene, camera); updateOverlay();
   perf.loadMs = performance.now() - t0;
@@ -1751,8 +1840,79 @@ function updateOverlay() {
     nameTag.hidden = !vis;
     if (vis) { if (nameTag.dataset.id !== String(sel.item)) { nameTag.textContent = Model.items[sel.item].label; nameTag.dataset.id = sel.item; } nameTag.style.left = s.x + 'px'; nameTag.style.top = (s.y - 12) + 'px'; }
   } else nameTag.hidden = true;
+  updatePlan();
 }
 nameTag.addEventListener('click', () => doAct('focus'));
+
+/* ---------- 평면 = 도면: 방 이름·면적(㎡·평), 바깥 치수 ----------
+   바닥 객체(이름에 Floor·바닥)의 상자에서 바로 계산해요. 위에서 내려다볼 때만 보여요.
+   1차에선 결과물 파일의 실(室) 이름 규칙에 맞춰 같은 방식으로 붙여요 */
+const PYEONG = 3.3058;
+const planEl = $('#plan'), planSvg = $('#planSvg'), planLabs = $('#planLabs'), planSum = $('#planSum');
+let planRooms = [], planBox = null, planDimEls = [], planShown = false;
+function buildPlan() {
+  planRooms = []; planLabs.innerHTML = '';
+  const isRoom = /floor|바닥|room/i, notRoom = /slab|base|deck|step|stair|ground|기초|데크|계단/i;
+  for (const it of Model.items) {
+    if (it.layer !== 'floor' || !isRoom.test(it.name) || notRoom.test(it.name)) continue;
+    const s = it.box.getSize(new V3()); const area = s.x * s.z;
+    if (area < 1 || s.y > 0.6) continue;   // 1㎡ 미만 조각·두꺼운 물체는 방으로 안 봄
+    const name = it.label.replace(/\s*바닥\s*/g, ' ').trim() || it.label;
+    const el = document.createElement('div'); el.className = 'room';
+    el.innerHTML = `<b>${esc(name)}</b><span><span class="a">${area.toFixed(1)}㎡</span><span class="p"> · ${(area / PYEONG).toFixed(1)}평</span></span>`;
+    planLabs.append(el); planRooms.push({ it, area, el, cls: '' });
+  }
+  // 바깥 치수: 벽 묶음 상자 (벽이 없으면 전체)
+  const wb = new THREE.Box3(); for (const it of Model.items) if (it.layer === 'wall') wb.union(it.box);
+  planBox = wb.isEmpty() ? Model.worldBox() : wb;
+  const sz = planBox.getSize(new V3());
+  planDimEls = [sz.x, sz.z].map(v => { const d = document.createElement('div'); d.className = 'dimlab'; d.innerHTML = `${v.toFixed(2)}<small>m</small>`; planLabs.append(d); return d; });
+  const total = planRooms.reduce((a, r) => a + r.area, 0);
+  planSum.innerHTML = planRooms.length ? `실내 바닥 <b>${total.toFixed(1)}㎡</b>${(total / PYEONG).toFixed(1)}평<i class="sep"></i>공간 ${planRooms.length}곳` : '';
+  planShown = null;
+}
+const _pv = new V3();
+function sp(x, y, z) { return toScreen(_pv.set(x, y, z)); }
+function updatePlan() {
+  const on = !!planBox && !rise && tool !== 'measure' && curDir().y > 0.985;
+  if (on !== planShown) {
+    planShown = on; planEl.classList.toggle('on', on);
+    document.body.classList.toggle('plan-on', on && planRooms.length > 0);
+  }
+  if (!on) return;
+  // 방 이름표: 방이 화면에서 차지하는 크기에 따라 이름+㎡+평 / 이름+㎡ / 이름만
+  for (const r of planRooms) {
+    const b = r.it.box, y = b.max.y;
+    const c = [sp(b.min.x, y, b.min.z), sp(b.max.x, y, b.min.z), sp(b.min.x, y, b.max.z), sp(b.max.x, y, b.max.z)];
+    const xs = c.map(p => p.x), ys = c.map(p => p.y);
+    const rw = Math.max(...xs) - Math.min(...xs), rh = Math.max(...ys) - Math.min(...ys);
+    const cx = (Math.max(...xs) + Math.min(...xs)) / 2, cy = (Math.max(...ys) + Math.min(...ys)) / 2;
+    const cls = !Model.itemVisible(r.it) || rw < 40 || rh < 22 ? 'off' : rw >= 128 && rh >= 48 ? 'l1' : rw >= 64 && rh >= 44 ? 'l2' : 'l3';
+    if (cls !== r.cls) { r.el.className = 'room ' + cls; r.cls = cls; }
+    if (cls !== 'off') r.el.style.transform = `translate(${(cx - r.el.offsetWidth / 2).toFixed(1)}px,${(cy - r.el.offsetHeight / 2).toFixed(1)}px)`;
+  }
+  // 바깥 치수선: 가로는 화면 위쪽 변, 세로는 왼쪽 변 바깥으로 띄워 그림 (끝은 건축 도면식 사선)
+  const B = planBox, y0 = 0;
+  const k = [sp(B.min.x, y0, B.min.z), sp(B.max.x, y0, B.min.z), sp(B.min.x, y0, B.max.z), sp(B.max.x, y0, B.max.z)].map(p => ({ x: p.x, y: p.y }));
+  const cen = { x: (k[0].x + k[3].x) / 2, y: (k[0].y + k[3].y) / 2 };
+  const pick2 = (e1, e2, key) => ((e1[0][key] + e1[1][key]) <= (e2[0][key] + e2[1][key]) ? e1 : e2);
+  const edges = [pick2([k[0], k[1]], [k[2], k[3]], 'y'), pick2([k[0], k[2]], [k[1], k[3]], 'x')];
+  const off = isPhone() ? 16 : 24;
+  let svg = '';
+  edges.forEach(([A, Bp], i) => {
+    let ex = Bp.x - A.x, ey = Bp.y - A.y; const L = Math.hypot(ex, ey) || 1; ex /= L; ey /= L;
+    let nx = -ey, ny = ex; const mx = (A.x + Bp.x) / 2, my = (A.y + Bp.y) / 2;
+    if (nx * (mx - cen.x) + ny * (my - cen.y) < 0) { nx = -nx; ny = -ny; }
+    const a = { x: A.x + nx * off, y: A.y + ny * off }, b = { x: Bp.x + nx * off, y: Bp.y + ny * off };
+    const t = (p) => `<line x1="${(p.x - (ex + nx) * 4).toFixed(1)}" y1="${(p.y - (ey + ny) * 4).toFixed(1)}" x2="${(p.x + (ex + nx) * 4).toFixed(1)}" y2="${(p.y + (ey + ny) * 4).toFixed(1)}" stroke-width="1.5"/>`;
+    svg += `<line x1="${(A.x + nx * 6).toFixed(1)}" y1="${(A.y + ny * 6).toFixed(1)}" x2="${(a.x + nx * 6).toFixed(1)}" y2="${(a.y + ny * 6).toFixed(1)}"/><line x1="${(Bp.x + nx * 6).toFixed(1)}" y1="${(Bp.y + ny * 6).toFixed(1)}" x2="${(b.x + nx * 6).toFixed(1)}" y2="${(b.y + ny * 6).toFixed(1)}"/><line x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}"/>${t(a)}${t(b)}`;
+    // 치수 글자는 선 방향을 따라 (세로 치수는 아래에서 위로 읽히게)
+    let th = Math.atan2(ey, ex) * 180 / Math.PI; if (th >= 80) th -= 180; else if (th < -100) th += 180;
+    const d = planDimEls[i];
+    if (d) d.style.transform = `translate(${((a.x + b.x) / 2).toFixed(1)}px,${((a.y + b.y) / 2).toFixed(1)}px) translate(-50%,-50%) rotate(${th.toFixed(1)}deg)`;
+  });
+  planSvg.innerHTML = `<g stroke="#4E5968" stroke-opacity=".7" stroke-width="1" stroke-linecap="round" fill="none">${svg}</g>`;
+}
 
 /* ---------- [6] 공유: 상태를 URL 해시에 담기 (형식은 v1과 같음) ---------- */
 const ShareCodec = {
@@ -2108,7 +2268,8 @@ let toastT = 0;
 function toast(msg, action = null) {
   const t = $('#toast'); $('#toastMsg').textContent = msg;
   const b = $('#toastAct'); b.hidden = !action; if (action) { b.textContent = action.label; b.onclick = () => { t.classList.remove('on'); action.fn(); }; }
-  t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), action ? 3200 : 2400);
+  t.classList.add('on'); document.body.classList.add('toasting');
+  clearTimeout(toastT); toastT = setTimeout(() => { t.classList.remove('on'); document.body.classList.remove('toasting'); }, action ? 3200 : 2400);
 }
 const tipEl = $('#tip'); let tipT = 0;
 function hideTip() { clearTimeout(tipT); tipEl.classList.remove('on'); }
@@ -2273,7 +2434,7 @@ addEventListener('hashchange', () => {
 /* 테스트·검수용 손잡이 (화면에는 영향 없음) */
 const setSheet = open => (open ? openSheet('list') : closeSheet());
 const setTab = t => (t === 'objects' ? openSheet('list') : sel.item != null ? openSheet('sel') : closeSheet());
-window.PF = { Model, Q, ENV, LOOK, UI, perf, camera, controls, scene, sun, hemi, renderer, loadFiles, loadSample, setSelection, applyColor, hideItem, toggleItem, toggleLayer, isolateItem, showAll, setView, setTool, addMeasure, measures, ShareCodec, openShare, setSheet, setTab, openSheet, closeSheet, openCard, doAct, onTap, toScreen, pick, sel, History, setLp, showLoader, setProg, hideLoader, loadError, get tool() { return tool; }, get curView() { return curView; } };
+window.PF = { Model, Q, ENV, LOOK, UI, perf, camera, controls, scene, sun, hemi, renderer, riser, buildPlan, loadFiles, loadSample, setSelection, applyColor, hideItem, toggleItem, toggleLayer, isolateItem, showAll, setView, setTool, addMeasure, measures, ShareCodec, openShare, setSheet, setTab, openSheet, closeSheet, openCard, doAct, onTap, toScreen, pick, sel, History, setLp, showLoader, setProg, hideLoader, loadError, get tool() { return tool; }, get curView() { return curView; } };
 </script>
 </body>
 </html>
